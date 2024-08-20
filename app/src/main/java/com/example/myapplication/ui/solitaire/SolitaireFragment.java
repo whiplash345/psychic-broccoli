@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import androidx.fragment.app.Fragment;
 import com.example.myapplication.R;
 import com.example.myapplication.model.Card;
@@ -83,5 +84,40 @@ public class SolitaireFragment extends Fragment {
 
     private void renderBoard(GridLayout solitaireBoard) {
         // TODO: Implement rendering logic to display cards on the board
+        solitaireBoard.removeAllViews();
+        int columnCount = 7; // Declare amount of tableau piles
+
+        // Add tableau piles to the board
+        for (int i = 0; i < tableauPiles.size(); i++) {
+            TableauPile tableauPile = tableauPiles.get(i);
+
+            for (int j = 0; j < tableauPile.getCards().size(); j++) {
+                Card card = tableauPile.getCards().get(j); // Access the card
+                ImageView cardView = createCardView(card);
+            }
+        }
+    }
+
+    private ImageView createCardView(Card card) {
+        ImageView cardView = new ImageView(getContext());
+
+        if (card == null) {
+            // TODO: Display a placeholder for when there is no card
+            //cardView.setImageResource();
+        } else if (card.isFaceUp()) {
+            int resId = getCardDrawableResource(card);
+            cardView.setImageResource(resId);
+        } else {
+            // TODO: Display the back of the card for when isFaceUp is false
+            // cardView.setImageResource();
+        }
+
+        return cardView;
+    }
+
+    private int getCardDrawableResource(Card card) {
+        // TODO: Map card suit and value to drawable resource IDs
+
+        // return;
     }
 }
