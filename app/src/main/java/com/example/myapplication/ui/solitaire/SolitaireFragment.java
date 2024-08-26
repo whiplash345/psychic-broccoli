@@ -83,9 +83,14 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void renderBoard(GridLayout solitaireBoard) {
-        // TODO: Implement rendering logic to display cards on the board
+        // Clear the board before rendering
         solitaireBoard.removeAllViews();
-        int columnCount = 7; // Declare amount of tableau piles
+
+        // Declare amount of tableau piles
+        int columnCount = 7;
+
+        // Set number of columns in the GridLayout
+        solitaireBoard.setColumnCount(columnCount);
 
         // Add tableau piles to the board
         for (int i = 0; i < tableauPiles.size(); i++) {
@@ -94,6 +99,15 @@ public class SolitaireFragment extends Fragment {
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
                 Card card = tableauPile.getCards().get(j); // Access the card
                 ImageView cardView = createCardView(card);
+
+                // Set layout parameters
+                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                params.columnSpec = GridLayout.spec(i);
+                params.rowSpec = GridLayout.spec(j);
+                cardView.setLayoutParams(params);
+
+                // Add the card view to the GridLayout
+                solitaireBoard.addView(cardView);
             }
         }
     }
@@ -117,7 +131,14 @@ public class SolitaireFragment extends Fragment {
 
     private int getCardDrawableResource(Card card) {
         // TODO: Map card suit and value to drawable resource IDs
+        String suit = card.getSuit().toLowerCase();
+        String value = card.getValue().toLowerCase();
 
-        // return;
+        String resourceName = "card_" + value + "_of_" + suit + ".png"; // TODO: double check whether ".png" needs to be appended
+
+        // TODO: look into getIdentifier being discouraged and getPackageName possibly throwing an NPE
+        int resId = getResources().getIdentifier(resourceName, "drawable", getContext().getPackageName());
+
+        return resId;
     }
 }
