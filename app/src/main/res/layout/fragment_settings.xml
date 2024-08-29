@@ -6,32 +6,38 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/casino_green"
+        android:paddingTop="100dp"
         tools:context=".ui.settings.SettingsFragment">
 
     <!-- You can add other UI components here if needed -->
 
     <Button
             android:text="Normal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:id="@+id/button"
-            app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="48dp"
-            app:layout_constraintBottom_toBottomOf="parent" android:layout_marginBottom="444dp"
-            app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="239dp"
-            app:layout_constraintVertical_bias="1.0"/>
+            android:layout_width="400dp"
+            android:layout_height="200dp" android:id="@+id/button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.1"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintHorizontal_bias="0.081"
+            android:textSize="60sp"/>
     <Button
             android:text="Enlarged"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:id="@+id/button3"
-            android:layout_marginEnd="48dp" app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="239dp"
-            app:layout_constraintBottom_toBottomOf="parent" android:layout_marginBottom="444dp"
-            app:layout_constraintVertical_bias="1.0"/>
+            android:layout_width="400dp"
+            android:layout_height="200dp" android:id="@+id/button3"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintHorizontal_bias="0.914" app:layout_constraintVertical_bias="0.1"
+            android:textSize="60sp"/>
     <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" app:srcCompat="@drawable/aceofspades" android:id="@+id/imageView4"
+            android:layout_width="263dp"
+            android:layout_height="359dp" app:srcCompat="@drawable/aceofspades" android:id="@+id/imageView4"
             android:layout_marginEnd="132dp"
             app:layout_constraintEnd_toEndOf="parent" android:layout_marginBottom="7dp"
             app:layout_constraintBottom_toTopOf="@+id/button" app:layout_constraintStart_toStartOf="parent"
             android:layout_marginStart="132dp" app:layout_constraintTop_toTopOf="parent"
-            android:layout_marginTop="2dp"/>
+            android:layout_marginTop="2dp"
+            app:layout_constraintVertical_bias="0.0"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
