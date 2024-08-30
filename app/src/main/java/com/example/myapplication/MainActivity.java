@@ -1,7 +1,6 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
-import android.view.Menu;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
@@ -30,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navigationView = binding.navView;
 
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_solitaire, R.id.spider, R.id.nav_game3, R.id.nav_settings)
+                R.id.nav_solitaire, R.id.nav_spider, R.id.nav_game3, R.id.nav_settings)
                 .setOpenableLayout(drawer)
                 .build();
 
