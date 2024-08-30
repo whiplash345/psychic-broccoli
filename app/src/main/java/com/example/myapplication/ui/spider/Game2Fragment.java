@@ -1,4 +1,4 @@
-package com.example.myapplication.ui.Game2;
+package com.example.myapplication.ui.spider;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,6 +13,6 @@ public class Game2Fragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_game2, container, false);
+        return inflater.inflate(R.layout.fragment_spider, container, false);
     }
 }
