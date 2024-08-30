@@ -101,10 +101,10 @@ public class SolitaireFragment extends Fragment {
                 ImageView cardView = createCardView(card);
 
                 // Set layout parameters
-                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-                params.columnSpec = GridLayout.spec(i);
-                params.rowSpec = GridLayout.spec(j);
-                cardView.setLayoutParams(params);
+                //GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                //params.columnSpec = GridLayout.spec(i);
+                //params.rowSpec = GridLayout.spec(j);
+                //cardView.setLayoutParams(params);
 
                 // Add the card view to the GridLayout
                 solitaireBoard.addView(cardView);
