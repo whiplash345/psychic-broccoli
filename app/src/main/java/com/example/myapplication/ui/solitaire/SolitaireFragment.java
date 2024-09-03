@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import androidx.fragment.app.Fragment;
 import com.example.myapplication.R;
 import com.example.myapplication.model.Card;
@@ -82,6 +83,62 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void renderBoard(GridLayout solitaireBoard) {
-        // TODO: Implement rendering logic to display cards on the board
+        // Clear the board before rendering
+        solitaireBoard.removeAllViews();
+
+        // Declare amount of tableau piles
+        int columnCount = 7;
+
+        // Set number of columns in the GridLayout
+        solitaireBoard.setColumnCount(columnCount);
+
+        // Add tableau piles to the board
+        for (int i = 0; i < tableauPiles.size(); i++) {
+            TableauPile tableauPile = tableauPiles.get(i);
+
+            for (int j = 0; j < tableauPile.getCards().size(); j++) {
+                Card card = tableauPile.getCards().get(j); // Access the card
+                ImageView cardView = createCardView(card);
+
+                // Set layout parameters
+                /*GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                params.columnSpec = GridLayout.spec(i);
+                params.rowSpec = GridLayout.spec(j);
+                cardView.setLayoutParams(params);
+*/
+                // Add the card view to the GridLayout
+                solitaireBoard.addView(cardView);
+            }
+        }
+    }
+
+    private ImageView createCardView(Card card) {
+        ImageView cardView = new ImageView(getContext());
+
+        if (card == null) {
+            // TODO: Display a placeholder for when there is no card
+            //cardView.setImageResource();
+        } else if (card.isFaceUp()) {
+            int resId = getCardDrawableResource(card);
+            cardView.setImageResource(resId);
+        } else {
+            // TODO: Display the back of the card for when isFaceUp is false
+            // cardView.setImageResource();
+        }
+
+        return cardView;
+    }
+
+    private int getCardDrawableResource(Card card) {
+        // TODO: Map card suit and value to drawable resource IDs
+        String suit = card.getSuit().toLowerCase();
+        String value = card.getValue().toLowerCase();
+
+        String resourceName = "card_" + value + "_of_" + suit + ".png"; // TODO: double check whether ".png" needs to be appended
+
+        // TODO: look into getIdentifier being discouraged and getPackageName possibly throwing an NPE
+        int resId = getResources().getIdentifier(resourceName, "drawable", getContext().getPackageName());
+
+        return resId;
     }
 }

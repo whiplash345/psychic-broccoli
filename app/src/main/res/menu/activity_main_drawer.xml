@@ -8,7 +8,7 @@
                 android:id="@+id/nav_solitaire"
                 android:title="Solitaire"/>
         <item
-                android:id="@+id/spider"
+                android:id="@+id/nav_spider"
                 android:title="Spider"/>
         <item
                 android:id="@+id/nav_game3"
