@@ -134,6 +134,7 @@ public class SolitaireFragment extends Fragment {
         String suit = card.getSuit().toLowerCase();
         String value = card.getValue().toLowerCase();
 
+        // TODO: Card assets are under app\src\main\res\drawable; change the string name appropriately
         String resourceName = "card_" + value + "_of_" + suit + ".png"; // TODO: double check whether ".png" needs to be appended
 
         // TODO: look into getIdentifier being discouraged and getPackageName possibly throwing an NPE
