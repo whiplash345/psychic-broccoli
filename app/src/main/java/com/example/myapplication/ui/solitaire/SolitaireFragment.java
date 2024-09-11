@@ -123,6 +123,14 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
+        cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                card.flip();
+                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card) : R.drawable.cardsback);
+            }
+        });
+
         return cardView;
     }
 
