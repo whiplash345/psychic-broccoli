@@ -87,6 +87,9 @@ public class SolitaireFragment extends Fragment {
         // Clear previous card views
         solitaireBoard.removeAllViews();
 
+        // Set how much to move the entire tableau pile (column) down
+        int verticalOffset = 100; // Adjust this value as needed
+
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
@@ -96,6 +99,10 @@ public class SolitaireFragment extends Fragment {
             layoutParams.columnSpec = GridLayout.spec(i);
             layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
             layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+
+            // Add top margin to move the column downwards
+            layoutParams.topMargin = verticalOffset;
+
             tableauLayout.setLayoutParams(layoutParams);
 
             // Add cards to FrameLayout, which will stack them
@@ -109,7 +116,7 @@ public class SolitaireFragment extends Fragment {
                         FrameLayout.LayoutParams.WRAP_CONTENT
                 );
 
-                // TODO: Adjust overlapping as needed
+                // Adjust overlapping as needed
                 cardParams.topMargin = j * 40;
                 cardView.setLayoutParams(cardParams);
 
