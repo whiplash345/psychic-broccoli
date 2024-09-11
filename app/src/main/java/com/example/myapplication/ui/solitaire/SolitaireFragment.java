@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import androidx.fragment.app.Fragment;
@@ -83,32 +84,40 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void renderBoard(GridLayout solitaireBoard) {
-        // Clear the board before rendering
+        // Clear previous card views
         solitaireBoard.removeAllViews();
 
-        // Declare amount of tableau piles
-        int columnCount = 7;
-
-        // Set number of columns in the GridLayout
-        solitaireBoard.setColumnCount(columnCount);
-
-        // Add tableau piles to the board
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
+            // Create a FrameLayout for each tableau pile
+            FrameLayout tableauLayout = new FrameLayout(getContext());
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+            layoutParams.columnSpec = GridLayout.spec(i);
+            layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
+            layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            tableauLayout.setLayoutParams(layoutParams);
+
+            // Add cards to FrameLayout, which will stack them
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
-                Card card = tableauPile.getCards().get(j); // Access the card
+                Card card = tableauPile.getCards().get(j);
                 ImageView cardView = createCardView(card);
 
-                // Set layout parameters
-                /*GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-                params.columnSpec = GridLayout.spec(i);
-                params.rowSpec = GridLayout.spec(j);
-                cardView.setLayoutParams(params);
-*/
-                // Add the card view to the GridLayout
-                solitaireBoard.addView(cardView);
+                // Stack cards with overlapping
+                FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                );
+
+                // TODO: Adjust overlapping as needed
+                cardParams.topMargin = j * 40;
+                cardView.setLayoutParams(cardParams);
+
+                tableauLayout.addView(cardView);
             }
+
+            // Add the tableau pile to the GridLayout
+            solitaireBoard.addView(tableauLayout);
         }
     }
 
