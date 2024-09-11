@@ -115,30 +115,35 @@ public class SolitaireFragment extends Fragment {
     private ImageView createCardView(Card card) {
         ImageView cardView = new ImageView(getContext());
 
-        if (card == null) {
-            // TODO: Display a placeholder for when there is no card
-            //cardView.setImageResource();
-        } else if (card.isFaceUp()) {
+        if (card.isFaceUp()) {
             int resId = getCardDrawableResource(card);
             cardView.setImageResource(resId);
         } else {
-            // TODO: Display the back of the card for when isFaceUp is false
-            // cardView.setImageResource();
+            // Display the back of the card when it's face down
+            cardView.setImageResource(R.drawable.cardsback);
         }
 
         return cardView;
     }
 
     private int getCardDrawableResource(Card card) {
-        // TODO: Map card suit and value to drawable resource IDs
-        String suit = card.getSuit().toLowerCase();
-        String value = card.getValue().toLowerCase();
+        // TODO: Card assets are under app\src\main\res\drawable
+        String cardName;
 
-        String resourceName = "card_" + value + "_of_" + suit + ".png"; // TODO: double check whether ".png" needs to be appended
+        // Cards with numeric values (2 through 10) need an "a" prefix
+        if (card.getValue().matches("\\d+")) { // Use regex to match values for "2" to "10"
+            cardName = "a" + card.getValue() + "of" + card.getSuit().toLowerCase();
+        } else { // For Ace, Jack, Queen, King
+            cardName = card.getValue().toLowerCase() + "of" + card.getSuit().toLowerCase();
+        }
 
+        // Get the drawable resource ID based on the card name
         // TODO: look into getIdentifier being discouraged and getPackageName possibly throwing an NPE
-        int resId = getResources().getIdentifier(resourceName, "drawable", getContext().getPackageName());
+        int resId = getResources().getIdentifier(cardName, "drawable", getContext().getPackageName());
 
-        return resId;
+        // return resId;
+
+        // Default to a placeholder if the image resource can't be found
+        return resId != 0 ? resId : R.drawable.cardsback;
     }
 }
