@@ -28,6 +28,15 @@
                     app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
         </com.google.android.material.appbar.AppBarLayout>
 
+        <!-- ImageView for toggling between images -->
+        <ImageView
+                android:id="@+id/imgView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@drawable/aaceofspades"
+                android:contentDescription="Card Image" />
+
         <!-- FragmentContainerView for displaying fragments -->
         <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragmentContainerView"

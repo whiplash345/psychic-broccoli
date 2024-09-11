@@ -1,22 +1,19 @@
 package com.example.myapplication.ui.spider;
 
-import android.graphics.Paint;
 import android.os.Bundle;
-import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 import com.example.myapplication.R;
 import com.example.myapplication.spider_solitaire_model.Card;
 import com.example.myapplication.spider_solitaire_model.Deck;
-import java.io.PrintStream;
+
 import java.util.ArrayList;
 
 
-public class Game2Fragment extends Fragment {
+public class SpiderSolitaireFragment extends Fragment {
 
     Button PlayButton;
     Deck deck; // Your deck object
