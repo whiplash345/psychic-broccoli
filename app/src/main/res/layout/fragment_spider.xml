@@ -7,144 +7,133 @@
         android:layout_height="match_parent"
         tools:context="com.example.myapplication.ui.spider.Game2Fragment">
 
-    <!-- Placeholder for the Solitaire Game UI components -->
+    <!-- Game board background -->
     <FrameLayout
-            android:id="@+id/SolitaireMenu"
+            android:id="@+id/gameBoard"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="16dp"
+            android:background="@color/casino_green"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" android:background="@color/casino_green" android:layout_marginTop="50dp">
+            app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Button to start the game -->
         <Button
+                android:id="@+id/play"
                 android:text="Play"
                 android:textSize="25sp"
                 android:layout_width="200dp"
                 android:layout_height="60dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginVertical="560dp"
-                android:backgroundTint="@color/design_default_color_secondary_variant"
-                android:id="@+id/play"/>
-        <ImageView
+                android:backgroundTint="@color/design_default_color_secondary_variant" />
+
+        <!-- Placeholder for each pile with proper constraints -->
+        <LinearLayout
+                android:id="@+id/pile1"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" tools:src="@tools:sample/backgrounds/scenic"
-                android:id="@+id/imageView5"/>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="1100dp"
-                android:layout_marginVertical="10dp"
-                android:background="@drawable/spiderback"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        </LinearLayout>
         <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="610dp"
-                android:layout_marginVertical="10dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="510dp"
-                android:layout_marginVertical="10dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-            <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_marginHorizontal="410dp"
-                    android:layout_marginVertical="10dp"
-                    android:background="@color/cardview_shadow_start_color"
-                    android:layout_width="75dp"
-                    android:layout_height="120dp">
-            </LinearLayout>
-                <LinearLayout
-                        android:orientation="horizontal"
-                        android:layout_marginHorizontal="310dp"
-                        android:layout_marginVertical="10dp"
-                        android:background="@color/cardview_shadow_start_color"
-                        android:layout_width="75dp"
-                        android:layout_height="120dp">
-                </LinearLayout>
-                    <LinearLayout
-                            android:orientation="horizontal"
-                            android:layout_marginHorizontal="210dp"
-                            android:layout_marginVertical="10dp"
-                            android:background="@color/cardview_shadow_start_color"
-                            android:layout_width="75dp"
-                            android:layout_height="120dp">
-                    </LinearLayout>
-                        <LinearLayout
-                                android:orientation="horizontal"
-                                android:layout_marginHorizontal="110dp"
-                                android:layout_marginVertical="10dp"
-                                android:background="@color/cardview_shadow_start_color"
-                                android:layout_width="75dp"
-                                android:layout_height="120dp">
-                        </LinearLayout>
-                            <LinearLayout
-                                    android:orientation="horizontal"
-                                    android:layout_marginHorizontal="10dp"
-                                    android:layout_marginVertical="10dp"
-                                    android:background="@color/cardview_shadow_start_color"
-                                    android:layout_width="75dp"
-                                    android:layout_height="120dp">
-                            </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="150dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="190dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="230dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="270dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="300dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
-        <LinearLayout
-                android:orientation="horizontal"
-                android:layout_marginHorizontal="10dp"
-                android:layout_marginVertical="340dp"
-                android:background="@color/cardview_shadow_start_color"
-                android:layout_width="75dp"
-                android:layout_height="120dp">
-        </LinearLayout>
+                android:id="@+id/pile2"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile1"
+                app:layout_constraintTop_toTopOf="parent" />
 
+        <LinearLayout
+                android:id="@+id/pile3"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile2"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile4"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile3"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile5"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile4"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile6"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile5"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile7"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile6"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile8"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile7"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile9"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile8"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+                android:id="@+id/pile10"
+                android:orientation="vertical"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toEndOf="@id/pile9"
+                app:layout_constraintTop_toTopOf="parent" />
 
     </FrameLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
