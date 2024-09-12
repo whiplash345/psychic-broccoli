@@ -101,8 +101,8 @@ public class Game2Fragment extends Fragment {
 
                 // Set the desired width and height for the card
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
-                        dpToPx(70),  // Width in dp
-                        dpToPx(110)  // Height in dp
+                        dpToPx(80),  // Width in dp
+                        dpToPx(120)  // Height in dp
                 );
                 layoutParams.setMargins(0, -80, 0, 0);  // Adjust margins to overlap cards
                 cardView.setLayoutParams(layoutParams);
