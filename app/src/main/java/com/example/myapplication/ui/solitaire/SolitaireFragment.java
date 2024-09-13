@@ -175,4 +175,6 @@ public class SolitaireFragment extends Fragment {
         // Return either the valid resId or the back of the card
         return resId != 0 ? resId : R.drawable.cardsback;
     }
+
+    //Hi
 }
