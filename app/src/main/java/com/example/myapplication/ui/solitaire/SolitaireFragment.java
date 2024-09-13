@@ -8,10 +8,13 @@ import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import com.example.myapplication.R;
 import com.example.myapplication.model.Card;
 import com.example.myapplication.model.FoundationPile;
 import com.example.myapplication.model.TableauPile;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,25 +27,45 @@ public class SolitaireFragment extends Fragment {
     private Stack<Card> wastePile;
     private List<FoundationPile> foundationPiles;
 
+    private SolitaireViewModel solitaireViewModel;
+    private GridLayout solitaireBoard;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_solitaire, container, false);
 
-        // Example: Create an ImageView for a card and add it to the GridLayout
-        GridLayout solitaireBoard = root.findViewById(R.id.solitaireBoard);
+        // Initialize the shared SolitaireViewModel
+        solitaireViewModel = new ViewModelProvider(requireActivity()).get(SolitaireViewModel.class);
 
-        // Create a sample card (e.g., Ace of Spades)
-        Card sampleCard = new Card("Spades", "A");
+        // Initialize the game board view
+        solitaireBoard = root.findViewById(R.id.solitaireBoard);
 
+        // Observe the card size state from the ViewModel
+        solitaireViewModel.getIsLargeCard().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean isLarge) {
+                updateCardSizes(isLarge); // Update all cards based on the size
+            }
+        });
 
-        initializeGameBoard(root);
+        // Check if game data exists in the ViewModel
+        if (solitaireViewModel.getTableauPiles() == null) {
+            // If there's no saved state, initialize a new game
+            initializeGameBoard();
+        } else {
+            // Restore the game state from the ViewModel
+            tableauPiles = solitaireViewModel.getTableauPiles();  // Get from ViewModel
+            stockPile = solitaireViewModel.getStockPile();        // Get from ViewModel
+            wastePile = solitaireViewModel.getWastePile();        // Get from ViewModel
+            foundationPiles = solitaireViewModel.getFoundationPiles();  // Get from ViewModel
+            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+        }
+
         return root;
     }
 
-    private void initializeGameBoard(View root) {
-        GridLayout solitaireBoard = root.findViewById(R.id.solitaireBoard);
-
+    private void initializeGameBoard() {
         tableauPiles = new ArrayList<>(7);
         for (int i = 0; i < 7; i++) {
             tableauPiles.add(new TableauPile());
@@ -61,14 +84,21 @@ public class SolitaireFragment extends Fragment {
             for (int j = 0; j <= i; j++) {
                 Card card = deck.remove(0);
                 if (j == i) {
-                    card.flip();
+                    card.flip();  // Ensure the last card in the pile is face up
                 }
                 tableauPiles.get(i).addCard(card);
             }
         }
 
         stockPile.addAll(deck);
-        renderBoard(solitaireBoard);
+
+        // Save game state to ViewModel
+        solitaireViewModel.setTableauPiles(tableauPiles);
+        solitaireViewModel.setStockPile(stockPile);
+        solitaireViewModel.setWastePile(wastePile);
+        solitaireViewModel.setFoundationPiles(foundationPiles);
+
+        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
     }
 
     private List<Card> createDeck() {
@@ -83,8 +113,8 @@ public class SolitaireFragment extends Fragment {
         return deck;
     }
 
-    private void renderBoard(GridLayout solitaireBoard) {
-        // Clear previous card views
+    private void renderBoard(GridLayout solitaireBoard, Boolean isLarge) {
+        // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
         // Set how much to move the entire tableau pile (column) down
@@ -108,7 +138,7 @@ public class SolitaireFragment extends Fragment {
             // Add cards to FrameLayout, which will stack them
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
                 Card card = tableauPile.getCards().get(j);
-                ImageView cardView = createCardView(card);
+                ImageView cardView = createCardView(card, isLarge);
 
                 // Stack cards with overlapping
                 FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
@@ -121,6 +151,7 @@ public class SolitaireFragment extends Fragment {
                 cardView.setLayoutParams(cardParams);
 
                 tableauLayout.addView(cardView);
+                //solitaireBoard.addView(cardView);
             }
 
             // Add the tableau pile to the GridLayout
@@ -128,11 +159,11 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
-    private ImageView createCardView(Card card) {
+    private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
 
         if (card.isFaceUp()) {
-            int resId = getCardDrawableResource(card);
+            int resId = getCardDrawableResource(card, isLarge);
             cardView.setImageResource(resId);
         } else {
             // Display the back of the card when it's face down
@@ -143,30 +174,28 @@ public class SolitaireFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 card.flip();
-                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card) : R.drawable.cardsback);
+                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
             }
         });
 
         return cardView;
     }
 
-    private int getCardDrawableResource(Card card) {
+    private int getCardDrawableResource(Card card, Boolean isLarge) {
         String value = card.getValue();
         String suit = card.getSuit();
         String cardName;
 
-        // Handle special names for aces, jacks, queens, kings
-        if ("A".equals(value)) {
-            cardName = "aceof" + suit.toLowerCase();
-        } else if ("J".equals(value)) {
-            cardName = "jackof" + suit.toLowerCase();
-        } else if ("Q".equals(value)) {
-            cardName = "queenof" + suit.toLowerCase();
-        } else if ("K".equals(value)) {
-            cardName = "kingof" + suit.toLowerCase();
-        } else {
-            // Prefix 'a' for numbered cards (2-10)
-            cardName = "a" + value + "of" + suit.toLowerCase();
+        // For Ace, Jack, Queen, King, prefix with "a"
+        if (card.getValue().matches("\\d+")) { // For numeric values
+            cardName = "a" + card.getValue() + "of" + card.getSuit().toLowerCase();
+        } else { // For face cards like Ace, Jack, Queen, King
+            cardName = "a" + card.getValue().toLowerCase() + "of" + card.getSuit().toLowerCase();
+        }
+
+        // If large card is needed, append "large"
+        if (isLarge) {
+            cardName = cardName + "large";
         }
 
         // Get the drawable resource ID based on the card name
@@ -174,5 +203,9 @@ public class SolitaireFragment extends Fragment {
 
         // Return either the valid resId or the back of the card
         return resId != 0 ? resId : R.drawable.cardsback;
+    }
+
+    private void updateCardSizes(boolean isLarge) {
+        renderBoard(solitaireBoard, isLarge); // Re-render the board with updated card sizes
     }
 }
