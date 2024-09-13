@@ -170,3 +170,4 @@ public class SolitaireFragment extends Fragment {
         renderBoard(solitaireBoard, isLarge); // Re-render the board with updated card sizes
     }
 }
+//Hi
