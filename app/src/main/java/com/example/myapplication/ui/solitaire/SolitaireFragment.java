@@ -52,7 +52,7 @@ public class SolitaireFragment extends Fragment {
         // Check if game data exists in the ViewModel
         if (solitaireViewModel.getTableauPiles() == null) {
             // If there's no saved state, initialize a new game
-            initializeGameBoard();
+            initializeGameBoard(root);
         } else {
             // Restore the game state from the ViewModel
             tableauPiles = solitaireViewModel.getTableauPiles();  // Get from ViewModel
