@@ -21,6 +21,8 @@ public class Card {
     // Static map of drawable resources
     private static final Map<String, Integer> cardImageMap = new HashMap<>();
 
+    //Luis, the card names changed. I had to do this to implement the large cards. I changed the face cards and aces names in your code
+    //to match what I added. I changed some of your code below to fix it, but if this messes with any other code, I am not aware. Just an FYI.
     static {
         // Initialize the map with card images
         cardImageMap.put("a2ofspades", R.drawable.a2ofspades);
@@ -32,10 +34,10 @@ public class Card {
         cardImageMap.put("a8ofspades", R.drawable.a8ofspades);
         cardImageMap.put("a9ofspades", R.drawable.a9ofspades);
         cardImageMap.put("a10ofspades", R.drawable.a10ofspades);
-        cardImageMap.put("jackofspades", R.drawable.jackofspades);
-        cardImageMap.put("queenofspades", R.drawable.queenofspades);
-        cardImageMap.put("kingofspades", R.drawable.kingofspades);
-        cardImageMap.put("aceofspades", R.drawable.aceofspades);
+        cardImageMap.put("ajackofspades", R.drawable.ajackofspades);
+        cardImageMap.put("aqueenofspades", R.drawable.aqueenofspades);
+        cardImageMap.put("akingofspades", R.drawable.akingofspades);
+        cardImageMap.put("aaceofspades", R.drawable.aaceofspades);
     }
 
     public Card(Suits suit, Ranks rank) {

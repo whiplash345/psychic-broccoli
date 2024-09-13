@@ -174,7 +174,7 @@ public class SolitaireFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 card.flip();
-                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card) : R.drawable.cardsback);
+                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
             }
         });
 
