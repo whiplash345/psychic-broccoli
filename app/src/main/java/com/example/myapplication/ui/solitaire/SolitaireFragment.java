@@ -65,7 +65,9 @@ public class SolitaireFragment extends Fragment {
         return root;
     }
 
-    private void initializeGameBoard() {
+    private void initializeGameBoard(View root) {
+        GridLayout solitaireBoard = root.findViewById(R.id.solitaireBoard);
+
         tableauPiles = new ArrayList<>(7);
         for (int i = 0; i < 7; i++) {
             tableauPiles.add(new TableauPile());
@@ -151,7 +153,6 @@ public class SolitaireFragment extends Fragment {
                 cardView.setLayoutParams(cardParams);
 
                 tableauLayout.addView(cardView);
-                //solitaireBoard.addView(cardView);
             }
 
             // Add the tableau pile to the GridLayout
@@ -186,14 +187,19 @@ public class SolitaireFragment extends Fragment {
         String suit = card.getSuit();
         String cardName;
 
-        // For Ace, Jack, Queen, King, prefix with "a"
-        if (card.getValue().matches("\\d+")) { // For numeric values
-            cardName = "a" + card.getValue() + "of" + card.getSuit().toLowerCase();
-        } else { // For face cards like Ace, Jack, Queen, King
-            cardName = "a" + card.getValue().toLowerCase() + "of" + card.getSuit().toLowerCase();
+        // Handle special names for aces, jacks, queens, kings
+        if ("A".equals(value)) {
+            cardName = "aaceof" + suit.toLowerCase();
+        } else if ("J".equals(value)) {
+            cardName = "ajackof" + suit.toLowerCase();
+        } else if ("Q".equals(value)) {
+            cardName = "aqueenof" + suit.toLowerCase();
+        } else if ("K".equals(value)) {
+            cardName = "akingof" + suit.toLowerCase();
+        } else {
+            // Prefix 'a' for numbered cards (2-10)
+            cardName = "a" + value + "of" + suit.toLowerCase();
         }
-
-        // If large card is needed, append "large"
         if (isLarge) {
             cardName = cardName + "large";
         }
