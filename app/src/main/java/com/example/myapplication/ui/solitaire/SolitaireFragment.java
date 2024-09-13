@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import androidx.fragment.app.Fragment;
@@ -51,7 +52,7 @@ public class SolitaireFragment extends Fragment {
         // Check if game data exists in the ViewModel
         if (solitaireViewModel.getTableauPiles() == null) {
             // If there's no saved state, initialize a new game
-            initializeGameBoard();
+            initializeGameBoard(root);
         } else {
             // Restore the game state from the ViewModel
             tableauPiles = solitaireViewModel.getTableauPiles();  // Get from ViewModel
@@ -64,7 +65,9 @@ public class SolitaireFragment extends Fragment {
         return root;
     }
 
-    private void initializeGameBoard() {
+    private void initializeGameBoard(View root) {
+        GridLayout solitaireBoard = root.findViewById(R.id.solitaireBoard);
+
         tableauPiles = new ArrayList<>(7);
         for (int i = 0; i < 7; i++) {
             tableauPiles.add(new TableauPile());
@@ -116,19 +119,44 @@ public class SolitaireFragment extends Fragment {
         // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
-        // Set number of columns in the GridLayout
-        solitaireBoard.setColumnCount(7);
+        // Set how much to move the entire tableau pile (column) down
+        int verticalOffset = 100; // Adjust this value as needed
 
-        // Add tableau piles to the board
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
+            // Create a FrameLayout for each tableau pile
+            FrameLayout tableauLayout = new FrameLayout(getContext());
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+            layoutParams.columnSpec = GridLayout.spec(i);
+            layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
+            layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+
+            // Add top margin to move the column downwards
+            layoutParams.topMargin = verticalOffset;
+
+            tableauLayout.setLayoutParams(layoutParams);
+
+            // Add cards to FrameLayout, which will stack them
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
                 Card card = tableauPile.getCards().get(j);
                 ImageView cardView = createCardView(card, isLarge);
 
-                solitaireBoard.addView(cardView);
+                // Stack cards with overlapping
+                FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        FrameLayout.LayoutParams.WRAP_CONTENT
+                );
+
+                // Adjust overlapping as needed
+                cardParams.topMargin = j * 60;
+                cardView.setLayoutParams(cardParams);
+
+                tableauLayout.addView(cardView);
             }
+
+            // Add the tableau pile to the GridLayout
+            solitaireBoard.addView(tableauLayout);
         }
     }
 
@@ -143,26 +171,43 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
+        cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                card.flip();
+                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
+            }
+        });
+
         return cardView;
     }
 
     private int getCardDrawableResource(Card card, Boolean isLarge) {
+        String value = card.getValue();
+        String suit = card.getSuit();
         String cardName;
 
-        // For Ace, Jack, Queen, King, prefix with "a"
-        if (card.getValue().matches("\\d+")) { // For numeric values
-            cardName = "a" + card.getValue() + "of" + card.getSuit().toLowerCase();
-        } else { // For face cards like Ace, Jack, Queen, King
-            cardName = "a" + card.getValue().toLowerCase() + "of" + card.getSuit().toLowerCase();
+        // Handle special names for aces, jacks, queens, kings
+        if ("A".equals(value)) {
+            cardName = "aaceof" + suit.toLowerCase();
+        } else if ("J".equals(value)) {
+            cardName = "ajackof" + suit.toLowerCase();
+        } else if ("Q".equals(value)) {
+            cardName = "aqueenof" + suit.toLowerCase();
+        } else if ("K".equals(value)) {
+            cardName = "akingof" + suit.toLowerCase();
+        } else {
+            // Prefix 'a' for numbered cards (2-10)
+            cardName = "a" + value + "of" + suit.toLowerCase();
         }
-
-        // If large card is needed, append "large"
         if (isLarge) {
             cardName = cardName + "large";
         }
 
+        // Get the drawable resource ID based on the card name
         int resId = getResources().getIdentifier(cardName, "drawable", getContext().getPackageName());
 
+        // Return either the valid resId or the back of the card
         return resId != 0 ? resId : R.drawable.cardsback;
     }
 
