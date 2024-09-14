@@ -119,22 +119,23 @@ public class SolitaireFragment extends Fragment {
         // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
-        // Set how much to move the entire tableau pile (column) down
-        int verticalOffset = 50; // Adjust this value as needed
-
-        // Add the stock pile
+        // Add the stock pile (column 0)
         addStockPile(solitaireBoard);
 
-        // Add the waste pile
+        // Add the waste pile (column 1)
         addWastePile(solitaireBoard);
 
+        // Set how much to move the entire tableau pile (column) down
+        int verticalOffset = 500; // Adjust this value as needed
+
+        // Start rendering tableau piles from column 2 onwards
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
             // Create a FrameLayout for each tableau pile
             FrameLayout tableauLayout = new FrameLayout(getContext());
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-            layoutParams.columnSpec = GridLayout.spec(i);
+            layoutParams.columnSpec = GridLayout.spec(i + 2); // Start tableau piles at column 2
             layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
             layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
 
@@ -174,12 +175,11 @@ public class SolitaireFragment extends Fragment {
         // TODO: stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.empty_stock : R.drawable.cardsback);
         stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.cardsback : R.drawable.cardsback);
 
-        // Set the size for the stock pile view
+        // Set the size and position for the stock pile view
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
         layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
         layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.columnSpec = GridLayout.spec(0);  // Place in the first column
-        layoutParams.rowSpec = GridLayout.spec(0);     // Top row
+        layoutParams.columnSpec = GridLayout.spec(0);  // Column 0 for stock pile
         layoutParams.topMargin = 50;  // Adjust as needed
         layoutParams.leftMargin = 50; // Adjust as needed
         stockPileView.setLayoutParams(layoutParams);
@@ -192,7 +192,6 @@ public class SolitaireFragment extends Fragment {
             }
         });
 
-        // Add the stock pile view to the board
         solitaireBoard.addView(stockPileView);
     }
 
@@ -212,7 +211,7 @@ public class SolitaireFragment extends Fragment {
             solitaireViewModel.setStockPile(stockPile);
             solitaireViewModel.setWastePile(wastePile);
         } else {
-            // If stock is empty, optionally reset the stock pile from the waste pile
+            // TODO: If stock is empty, optionally reset the stock pile from the waste pile
         }
     }
 
@@ -228,11 +227,11 @@ public class SolitaireFragment extends Fragment {
             wastePileView.setImageResource(R.drawable.cardsback); // Empty waste pile image
         }
 
+        // Set the size and position for the waste pile view
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
         layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
         layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.columnSpec = GridLayout.spec(1);  // Place in the second column, next to the stock pile
-        layoutParams.rowSpec = GridLayout.spec(0);     // Top row
+        layoutParams.columnSpec = GridLayout.spec(1);  // Column 1 for waste pile
         layoutParams.topMargin = 50;  // Adjust as needed
         layoutParams.leftMargin = 50; // Adjust as needed
         wastePileView.setLayoutParams(layoutParams);
