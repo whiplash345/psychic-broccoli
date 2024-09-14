@@ -120,7 +120,13 @@ public class SolitaireFragment extends Fragment {
         solitaireBoard.removeAllViews();
 
         // Set how much to move the entire tableau pile (column) down
-        int verticalOffset = 100; // Adjust this value as needed
+        int verticalOffset = 50; // Adjust this value as needed
+
+        // Add the stock pile
+        addStockPile(solitaireBoard);
+
+        // Add the waste pile
+        addWastePile(solitaireBoard);
 
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
@@ -158,6 +164,80 @@ public class SolitaireFragment extends Fragment {
             // Add the tableau pile to the GridLayout
             solitaireBoard.addView(tableauLayout);
         }
+    }
+
+    private void addStockPile(GridLayout solitaireBoard) {
+        ImageView stockPileView = new ImageView(getContext());
+
+        // Set the image for the stock pile
+        // TODO: replace the first cardsback with an emptystock asset
+        // TODO: stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.empty_stock : R.drawable.cardsback);
+        stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.cardsback : R.drawable.cardsback);
+
+        // Set the size for the stock pile view
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+        layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
+        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+        layoutParams.columnSpec = GridLayout.spec(0);  // Place in the first column
+        layoutParams.rowSpec = GridLayout.spec(0);     // Top row
+        layoutParams.topMargin = 50;  // Adjust as needed
+        layoutParams.leftMargin = 50; // Adjust as needed
+        stockPileView.setLayoutParams(layoutParams);
+
+        // Handle click events on the stock pile
+        stockPileView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                drawFromStock();
+            }
+        });
+
+        // Add the stock pile view to the board
+        solitaireBoard.addView(stockPileView);
+    }
+
+    private void drawFromStock() {
+        if (!stockPile.isEmpty()) {
+            // Draw the top card from the stock pile
+            Card drawnCard = stockPile.pop();
+            drawnCard.flip(); // Flip it face up
+
+            // Add the card to the waste pile
+            wastePile.push(drawnCard);
+
+            // Update the board (re-render)
+            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+
+            // Save the state to ViewModel
+            solitaireViewModel.setStockPile(stockPile);
+            solitaireViewModel.setWastePile(wastePile);
+        } else {
+            // If stock is empty, optionally reset the stock pile from the waste pile
+        }
+    }
+
+    private void addWastePile(GridLayout solitaireBoard) {
+        ImageView wastePileView = new ImageView(getContext());
+
+        if (!wastePile.isEmpty()) {
+            Card topCard = wastePile.peek();
+            wastePileView.setImageResource(getCardDrawableResource(topCard, solitaireViewModel.getIsLargeCard().getValue()));
+        } else {
+            // TODO: replace cardsback with an emptystock asset
+            // TODO: wastePileView.setImageResource(R.drawable.empty_stock);
+            wastePileView.setImageResource(R.drawable.cardsback); // Empty waste pile image
+        }
+
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+        layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
+        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+        layoutParams.columnSpec = GridLayout.spec(1);  // Place in the second column, next to the stock pile
+        layoutParams.rowSpec = GridLayout.spec(0);     // Top row
+        layoutParams.topMargin = 50;  // Adjust as needed
+        layoutParams.leftMargin = 50; // Adjust as needed
+        wastePileView.setLayoutParams(layoutParams);
+
+        solitaireBoard.addView(wastePileView);
     }
 
     private ImageView createCardView(Card card, Boolean isLarge) {
