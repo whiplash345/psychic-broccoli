@@ -242,14 +242,34 @@ public class SolitaireFragment extends Fragment {
     private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
 
+        // Original dimensions of the card (approximately 147x229)
+        int originalWidth = 147;
+        int originalHeight = 229;
+
+        // Calculate the 50% size
+        int scaledWidth = (int) (originalWidth * 0.5);
+        int scaledHeight = (int) (originalHeight * 0.5);
+
+        // Set the fixed size of the ImageView
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
+        cardView.setLayoutParams(layoutParams);
+
+        // Set scale type to ensure the card is resized properly
+        cardView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+        // Set the card image (face-up or face-down)
         if (card.isFaceUp()) {
             int resId = getCardDrawableResource(card, isLarge);
             cardView.setImageResource(resId);
         } else {
-            // Display the back of the card when it's face down
             cardView.setImageResource(R.drawable.cardsback);
         }
 
+        // Apply scale to the ImageView
+        cardView.setScaleX(0.5f); // Scale 50% horizontally
+        cardView.setScaleY(0.5f); // Scale 50% vertically
+
+        // Set onClick listener for flipping cards
         cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
