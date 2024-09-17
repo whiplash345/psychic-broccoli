@@ -22,6 +22,9 @@ import java.util.Stack;
 
 public class SolitaireFragment extends Fragment {
 
+    private static final int ORIGINAL_WIDTH = 147;  // Original card width
+    private static final int ORIGINAL_HEIGHT = 229; // Original card height
+
     private List<TableauPile> tableauPiles;
     private Stack<Card> stockPile;
     private Stack<Card> wastePile;
@@ -63,6 +66,14 @@ public class SolitaireFragment extends Fragment {
         }
 
         return root;
+    }
+
+    private int getScaledWidth() {
+        return (int) (ORIGINAL_WIDTH * 1.5); // Adjust this value as needed
+    }
+
+    private int getScaledHeight() {
+        return (int) (ORIGINAL_HEIGHT * 1.5); // Adjust this value as needed
     }
 
     private void initializeGameBoard(View root) {
@@ -120,10 +131,10 @@ public class SolitaireFragment extends Fragment {
         solitaireBoard.removeAllViews();
 
         // Add the stock pile (column 0)
-        addStockPile(solitaireBoard);
+        addStockPile(solitaireBoard, isLarge);
 
         // Add the waste pile (column 1)
-        addWastePile(solitaireBoard);
+        addWastePile(solitaireBoard, isLarge);
 
         // Set how much to move the entire tableau pile (column) down
         int verticalOffset = 500; // Adjust this value as needed
@@ -151,8 +162,7 @@ public class SolitaireFragment extends Fragment {
 
                 // Stack cards with overlapping
                 FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT
+                        getScaledWidth(), getScaledHeight() // Ensure sizes are scaled
                 );
 
                 // Adjust overlapping as needed
@@ -167,28 +177,24 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
-    private void addStockPile(GridLayout solitaireBoard) {
+    private void addStockPile(GridLayout solitaireBoard, Boolean isLarge) {
         ImageView stockPileView = new ImageView(getContext());
-
-        // Set the image for the stock pile
         stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.backgroundtransparent : R.drawable.cardsback);
 
-        // Set the size and position for the stock pile view
+        int scaledWidth = getScaledWidth();
+        int scaledHeight = getScaledHeight();
+
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-        layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.columnSpec = GridLayout.spec(0);  // Column 0 for stock pile
-        layoutParams.topMargin = 100;  // Adjust as needed
+        layoutParams.width = scaledWidth;
+        layoutParams.height = scaledHeight;
+        layoutParams.columnSpec = GridLayout.spec(0); // Column 0 for stock pile
+        layoutParams.topMargin = 100; // Adjust as needed
         layoutParams.leftMargin = 50; // Adjust as needed
         stockPileView.setLayoutParams(layoutParams);
+        stockPileView.setScaleType(ImageView.ScaleType.FIT_XY);
 
         // Handle click events on the stock pile
-        stockPileView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                drawFromStock();
-            }
-        });
+        stockPileView.setOnClickListener(view -> drawFromStock());
 
         solitaireBoard.addView(stockPileView);
     }
@@ -213,24 +219,27 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
-    private void addWastePile(GridLayout solitaireBoard) {
+    private void addWastePile(GridLayout solitaireBoard, Boolean isLarge) {
         ImageView wastePileView = new ImageView(getContext());
 
         if (!wastePile.isEmpty()) {
             Card topCard = wastePile.peek();
-            wastePileView.setImageResource(getCardDrawableResource(topCard, solitaireViewModel.getIsLargeCard().getValue()));
+            wastePileView.setImageResource(getCardDrawableResource(topCard, isLarge));
         } else {
             wastePileView.setImageResource(R.drawable.backgroundtransparent); // Empty waste pile image
         }
 
-        // Set the size and position for the waste pile view
+        int scaledWidth = getScaledWidth();
+        int scaledHeight = getScaledHeight();
+
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-        layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.columnSpec = GridLayout.spec(1);  // Column 1 for waste pile
-        layoutParams.topMargin = 100;  // Adjust as needed
+        layoutParams.width = scaledWidth;
+        layoutParams.height = scaledHeight;
+        layoutParams.columnSpec = GridLayout.spec(1); // Column 1 for waste pile
+        layoutParams.topMargin = 100; // Adjust as needed
         layoutParams.leftMargin = 50; // Adjust as needed
         wastePileView.setLayoutParams(layoutParams);
+        wastePileView.setScaleType(ImageView.ScaleType.FIT_XY);
 
         solitaireBoard.addView(wastePileView);
     }
@@ -238,13 +247,8 @@ public class SolitaireFragment extends Fragment {
     private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
 
-        // Original dimensions of the card (approximately 147x229)
-        int originalWidth = 147;
-        int originalHeight = 229;
-
-        // Calculate the 50% size
-        int scaledWidth = (int) (originalWidth * 0.5);
-        int scaledHeight = (int) (originalHeight * 0.5);
+        int scaledWidth = getScaledWidth();
+        int scaledHeight = getScaledHeight();
 
         // Set the fixed size of the ImageView
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
@@ -261,17 +265,10 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
-        // Apply scale to the ImageView
-        cardView.setScaleX(0.5f); // Scale 50% horizontally
-        cardView.setScaleY(0.5f); // Scale 50% vertically
-
         // Set onClick listener for flipping cards
-        cardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                card.flip();
-                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
-            }
+        cardView.setOnClickListener(view -> {
+            card.flip();
+            cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
         });
 
         return cardView;
