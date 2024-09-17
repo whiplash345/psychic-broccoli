@@ -58,19 +58,6 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.PileViewHolder
             for (Card card : pile) {
                 ImageView cardView = new ImageView(pileLayout.getContext());
 
-                // Fetch the card image from the map based on suit and rank
-                String mapKey = card.getSuit().toString() + "_" + card.getRank().toString();
-
-                // Set the front image if face up, otherwise use the back image
-                Card.getCardImageResource(card);
-
-                // Set card view layout parameters (optional, customize margins)
-//                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-//                        FrameLayout.LayoutParams.WRAP_CONTENT,
-//                        FrameLayout.LayoutParams.WRAP_CONTENT);
-//                layoutParams.setMargins(0, -30, 0, 0);  // Overlap cards slightly
-//                cardView.setLayoutParams(layoutParams);
-
                 pileLayout.addView(cardView);  // Add the card view to the pile
             }
         }
