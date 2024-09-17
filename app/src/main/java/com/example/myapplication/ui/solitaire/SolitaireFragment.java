@@ -178,7 +178,7 @@ public class SolitaireFragment extends Fragment {
         layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
         layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
         layoutParams.columnSpec = GridLayout.spec(0);  // Column 0 for stock pile
-        layoutParams.topMargin = 50;  // Adjust as needed
+        layoutParams.topMargin = 100;  // Adjust as needed
         layoutParams.leftMargin = 50; // Adjust as needed
         stockPileView.setLayoutParams(layoutParams);
 
@@ -228,7 +228,7 @@ public class SolitaireFragment extends Fragment {
         layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
         layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
         layoutParams.columnSpec = GridLayout.spec(1);  // Column 1 for waste pile
-        layoutParams.topMargin = 50;  // Adjust as needed
+        layoutParams.topMargin = 100;  // Adjust as needed
         layoutParams.leftMargin = 50; // Adjust as needed
         wastePileView.setLayoutParams(layoutParams);
 
