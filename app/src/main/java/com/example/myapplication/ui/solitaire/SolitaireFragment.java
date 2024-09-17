@@ -171,9 +171,7 @@ public class SolitaireFragment extends Fragment {
         ImageView stockPileView = new ImageView(getContext());
 
         // Set the image for the stock pile
-        // TODO: replace the first cardsback with an emptystock asset
-        // TODO: stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.emptystock : R.drawable.cardsback);
-        stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.cardsback : R.drawable.cardsback);
+        stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.backgroundtransparent : R.drawable.cardsback);
 
         // Set the size and position for the stock pile view
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
@@ -222,9 +220,7 @@ public class SolitaireFragment extends Fragment {
             Card topCard = wastePile.peek();
             wastePileView.setImageResource(getCardDrawableResource(topCard, solitaireViewModel.getIsLargeCard().getValue()));
         } else {
-            // TODO: replace cardsback with an emptystock asset
-            // TODO: wastePileView.setImageResource(R.drawable.emptystock);
-            wastePileView.setImageResource(R.drawable.cardsback); // Empty waste pile image
+            wastePileView.setImageResource(R.drawable.backgroundtransparent); // Empty waste pile image
         }
 
         // Set the size and position for the waste pile view
