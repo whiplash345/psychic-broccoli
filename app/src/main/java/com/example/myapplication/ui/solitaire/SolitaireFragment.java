@@ -24,6 +24,9 @@ import java.util.Stack;
 
 public class SolitaireFragment extends Fragment {
 
+    private static final int ORIGINAL_WIDTH = 147;  // Original card width
+    private static final int ORIGINAL_HEIGHT = 229; // Original card height
+
     private List<TableauPile> tableauPiles;
     private Stack<Card> stockPile;
     private Stack<Card> wastePile;
@@ -65,6 +68,14 @@ public class SolitaireFragment extends Fragment {
         }
 
         return root;
+    }
+
+    private int getScaledWidth() {
+        return (int) (ORIGINAL_WIDTH * 1.15); // Adjust this value as needed
+    }
+
+    private int getScaledHeight() {
+        return (int) (ORIGINAL_HEIGHT * 1.15); // Adjust this value as needed
     }
 
     private void initializeGameBoard(View root) {
@@ -121,6 +132,11 @@ public class SolitaireFragment extends Fragment {
         // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
+        // Add the stock pile (column 0, row 0)
+        addStockPile(solitaireBoard, isLarge);
+
+        // Add the waste pile (column 1, row 0)
+        addWastePile(solitaireBoard, isLarge);
         // Access MainActivity to get the TextToSpeech instance
         MainActivity mainActivity = (MainActivity) getActivity();
         TextToSpeech tts = mainActivity.getTextToSpeech();
@@ -128,15 +144,44 @@ public class SolitaireFragment extends Fragment {
         // Set the vertical overlap between cards. Reduce this value to increase overlap.
         int verticalOverlap = 50; // Adjust this value to control the overlap
 
+        // Add the four foundation piles (columns 3-6, row 0)
+        addFoundationPiles(solitaireBoard, isLarge);
+
+        // Set vertical offset to move tableau piles below stock/waste/foundation piles
+        int verticalOffset = getScaledHeight() - 200; // Adjust as needed
+
+        // Get the total width of the screen to distribute columns evenly
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+
+        // Calculate an equal width for each tableau pile (dividing by 7 columns)
+        int tableauColumnWidth = screenWidth / 7;
+
+        // Render tableau piles starting from column 0, but on the next row (row 1)
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
             // Create a FrameLayout for each tableau pile
-            FrameLayout frameLayout = new FrameLayout(getContext());
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.columnSpec = GridLayout.spec(i);
-            frameLayout.setLayoutParams(params);
+            FrameLayout tableauLayout = new FrameLayout(getContext());
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
 
+            // Set each tableau pile in its respective column
+            layoutParams.columnSpec = GridLayout.spec(i); // Place in column 0-6
+            layoutParams.rowSpec = GridLayout.spec(1);    // Place in row 1
+
+            // Set consistent width for each column
+            layoutParams.width = tableauColumnWidth; // Each column has equal width
+            layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+
+            // Remove any left or right margins to avoid gaps
+            layoutParams.leftMargin = 0;
+            layoutParams.rightMargin = 0;
+
+            // Add top margin to move the tableau piles down (from stock/waste/foundation piles)
+            layoutParams.topMargin = verticalOffset;
+
+            tableauLayout.setLayoutParams(layoutParams);
+
+            // Add cards to FrameLayout, stacking them with overlapping
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
                 Card card = tableauPile.getCards().get(j);  // Get the current card
 
@@ -145,10 +190,11 @@ public class SolitaireFragment extends Fragment {
 
                 // Set layout parameters for cardView to create overlap
                 FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.WRAP_CONTENT,
-                        FrameLayout.LayoutParams.WRAP_CONTENT
+                        getScaledWidth(), getScaledHeight() // Ensure sizes are scaled
                 );
-                cardParams.topMargin = j * verticalOverlap;  // Adjust this value to control overlap
+
+                // Adjust overlapping margin for stacked cards
+                cardParams.topMargin = j * 35; // Adjust overlap between cards
                 cardView.setLayoutParams(cardParams);
 
                 // Set OnClickListener for each card to speak its name (only if face-up)
@@ -173,9 +219,129 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
+    private void addStockPile(GridLayout solitaireBoard, Boolean isLarge) {
+        ImageView stockPileView = new ImageView(getContext());
+        stockPileView.setImageResource(stockPile.isEmpty() ? R.drawable.backgroundtransparent : R.drawable.cardsback);
+
+        int scaledWidth = getScaledWidth();
+        int scaledHeight = getScaledHeight();
+
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+        layoutParams.width = scaledWidth;
+        layoutParams.height = scaledHeight;
+        layoutParams.columnSpec = GridLayout.spec(0); // Place stock pile in column 0
+        layoutParams.rowSpec = GridLayout.spec(0); // Place in row 0
+        layoutParams.topMargin = 100; // Adjust top margin if necessary
+
+        // Remove left margin to align it with the first tableau pile
+        layoutParams.leftMargin = 0;
+
+        stockPileView.setLayoutParams(layoutParams);
+        stockPileView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+        // Handle click events on the stock pile
+        stockPileView.setOnClickListener(view -> drawFromStock());
+
+        solitaireBoard.addView(stockPileView);
+    }
+
+
+    private void drawFromStock() {
+        if (!stockPile.isEmpty()) {
+            // Draw the top card from the stock pile
+            Card drawnCard = stockPile.pop();
+            drawnCard.flip(); // Flip it face up
+
+            // Add the card to the waste pile
+            wastePile.push(drawnCard);
+
+            // Update the board (re-render)
+            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+
+            // Save the state to ViewModel
+            solitaireViewModel.setStockPile(stockPile);
+            solitaireViewModel.setWastePile(wastePile);
+        } else {
+            // TODO: If stock is empty, optionally reset the stock pile from the waste pile
+        }
+    }
+
+    private void addWastePile(GridLayout solitaireBoard, Boolean isLarge) {
+        ImageView wastePileView = new ImageView(getContext());
+
+        if (!wastePile.isEmpty()) {
+            Card topCard = wastePile.peek();
+            wastePileView.setImageResource(getCardDrawableResource(topCard, isLarge));
+        } else {
+            wastePileView.setImageResource(R.drawable.backgroundtransparent); // Empty waste pile image
+        }
+
+        int scaledWidth = getScaledWidth();
+        int scaledHeight = getScaledHeight();
+
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+        layoutParams.width = scaledWidth;
+        layoutParams.height = scaledHeight;
+        layoutParams.columnSpec = GridLayout.spec(1); // Place waste pile in column 1
+        layoutParams.rowSpec = GridLayout.spec(0);    // Place in row 0
+        layoutParams.topMargin = 100; // Adjust top margin if necessary
+
+        // Remove left margin to align it with the second tableau pile
+        layoutParams.leftMargin = 0;
+
+        wastePileView.setLayoutParams(layoutParams);
+        wastePileView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+        solitaireBoard.addView(wastePileView);
+    }
+
+    private void addFoundationPiles(GridLayout solitaireBoard, Boolean isLarge) {
+        for (int i = 0; i < foundationPiles.size(); i++) {
+            ImageView foundationPileView = new ImageView(getContext());
+
+            FoundationPile foundationPile = foundationPiles.get(i);
+
+            Card topCard = foundationPile.peekTopCard();
+
+            // Set the image for the top card if it exists, otherwise show the transparent background
+            if (topCard != null) {
+                foundationPileView.setImageResource(getCardDrawableResource(topCard, isLarge));
+            } else {
+                foundationPileView.setImageResource(R.drawable.backgroundtransparent);
+            }
+
+            int scaledWidth = getScaledWidth();
+            int scaledHeight = getScaledHeight();
+
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+            layoutParams.width = scaledWidth;
+            layoutParams.height = scaledHeight;
+
+            layoutParams.columnSpec = GridLayout.spec(3 + i); // Columns 3, 4, 5, 6
+            layoutParams.rowSpec = GridLayout.spec(0);        // Row 0
+            layoutParams.topMargin = 100; // Adjust as needed
+
+            foundationPileView.setLayoutParams(layoutParams);
+            foundationPileView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+            solitaireBoard.addView(foundationPileView);
+        }
+    }
+
     private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
 
+        int scaledWidth = getScaledWidth();
+        int scaledHeight = getScaledHeight();
+
+        // Set the fixed size of the ImageView
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
+        cardView.setLayoutParams(layoutParams);
+
+        // Set scale type to ensure the card is resized properly
+        cardView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+        // Set the card image (face-up or face-down)
         if (card.isFaceUp()) {
             int resId = getCardDrawableResource(card, isLarge);
             cardView.setImageResource(resId);
@@ -184,12 +350,10 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
-        cardView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                card.flip();
-                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
-            }
+        // Set onClick listener for flipping cards
+        cardView.setOnClickListener(view -> {
+            card.flip();
+            cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
         });
 
         return cardView;
