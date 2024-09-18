@@ -130,32 +130,47 @@ public class SolitaireFragment extends Fragment {
         // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
-        // Add the stock pile (column 0)
+        // Add the stock pile (column 0, row 0)
         addStockPile(solitaireBoard, isLarge);
 
-        // Add the waste pile (column 1)
+        // Add the waste pile (column 1, row 0)
         addWastePile(solitaireBoard, isLarge);
 
-        // Set how much to move the entire tableau pile (column) down
-        int verticalOffset = 500; // Adjust this value as needed
+        // Set vertical offset to move tableau piles below stock/waste piles
+        int verticalOffset = getScaledHeight() - 300; // Adjust as needed
 
-        // Start rendering tableau piles from column 2 onwards
+        // Get the total width of the screen to distribute columns evenly
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+
+        // Calculate an equal width for each tableau pile (dividing by 7 columns)
+        int tableauColumnWidth = screenWidth / 7;
+
+        // Render tableau piles starting from column 0, but on the next row (row 1)
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
             // Create a FrameLayout for each tableau pile
             FrameLayout tableauLayout = new FrameLayout(getContext());
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-            layoutParams.columnSpec = GridLayout.spec(i + 2); // Start tableau piles at column 2
-            layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
+
+            // Set each tableau pile in its respective column
+            layoutParams.columnSpec = GridLayout.spec(i); // Place in column 0-6
+            layoutParams.rowSpec = GridLayout.spec(1);    // Place in row 1
+
+            // Set consistent width for each column
+            layoutParams.width = tableauColumnWidth; // Each column has equal width
             layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
 
-            // Add top margin to move the column downwards
+            // Remove any left or right margins to avoid gaps
+            layoutParams.leftMargin = 0;
+            layoutParams.rightMargin = 0;
+
+            // Add top margin to move the tableau piles down (from stock/waste piles)
             layoutParams.topMargin = verticalOffset;
 
             tableauLayout.setLayoutParams(layoutParams);
 
-            // Add cards to FrameLayout, which will stack them
+            // Add cards to FrameLayout, stacking them with overlapping
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
                 Card card = tableauPile.getCards().get(j);
                 ImageView cardView = createCardView(card, isLarge);
@@ -165,8 +180,8 @@ public class SolitaireFragment extends Fragment {
                         getScaledWidth(), getScaledHeight() // Ensure sizes are scaled
                 );
 
-                // Adjust overlapping as needed
-                cardParams.topMargin = j * 60;
+                // Adjust overlapping margin for stacked cards
+                cardParams.topMargin = j * 60; // Adjust overlap between cards
                 cardView.setLayoutParams(cardParams);
 
                 tableauLayout.addView(cardView);
@@ -187,9 +202,13 @@ public class SolitaireFragment extends Fragment {
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
         layoutParams.width = scaledWidth;
         layoutParams.height = scaledHeight;
-        layoutParams.columnSpec = GridLayout.spec(0); // Column 0 for stock pile
-        layoutParams.topMargin = 100; // Adjust as needed
-        layoutParams.leftMargin = 50; // Adjust as needed
+        layoutParams.columnSpec = GridLayout.spec(0); // Place stock pile in column 0
+        layoutParams.rowSpec = GridLayout.spec(0); // Place in row 0
+        layoutParams.topMargin = 100; // Adjust top margin if necessary
+
+        // Remove left margin to align it with the first tableau pile
+        layoutParams.leftMargin = 0;
+
         stockPileView.setLayoutParams(layoutParams);
         stockPileView.setScaleType(ImageView.ScaleType.FIT_XY);
 
@@ -198,6 +217,7 @@ public class SolitaireFragment extends Fragment {
 
         solitaireBoard.addView(stockPileView);
     }
+
 
     private void drawFromStock() {
         if (!stockPile.isEmpty()) {
@@ -235,14 +255,19 @@ public class SolitaireFragment extends Fragment {
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
         layoutParams.width = scaledWidth;
         layoutParams.height = scaledHeight;
-        layoutParams.columnSpec = GridLayout.spec(1); // Column 1 for waste pile
-        layoutParams.topMargin = 100; // Adjust as needed
-        layoutParams.leftMargin = 50; // Adjust as needed
+        layoutParams.columnSpec = GridLayout.spec(1); // Place waste pile in column 1
+        layoutParams.rowSpec = GridLayout.spec(0);    // Place in row 0
+        layoutParams.topMargin = 100; // Adjust top margin if necessary
+
+        // Remove left margin to align it with the second tableau pile
+        layoutParams.leftMargin = 0;
+
         wastePileView.setLayoutParams(layoutParams);
         wastePileView.setScaleType(ImageView.ScaleType.FIT_XY);
 
         solitaireBoard.addView(wastePileView);
     }
+
 
     private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
