@@ -211,11 +211,11 @@ public class SolitaireFragment extends Fragment {
                 });
 
                 // Add the card to the FrameLayout (the tableau pile)
-                frameLayout.addView(cardView);
+                tableauLayout.addView(cardView);
             }
 
             // Add the FrameLayout (tableau pile) to the GridLayout
-            solitaireBoard.addView(frameLayout);
+            solitaireBoard.addView(tableauLayout);
         }
     }
 
