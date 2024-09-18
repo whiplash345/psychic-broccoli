@@ -7,23 +7,22 @@
         android:layout_height="match_parent"
         tools:context="com.example.myapplication.ui.solitaire.SolitaireFragment">
 
-    <!-- Placeholder for the Solitaire Game UI components -->
-    <GridLayout
-            android:id="@+id/solitaireBoard"
+    <!-- ScrollView to allow vertical scrolling of the card piles -->
+    <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:columnCount="7"
-            android:rowCount="1"
-            android:padding="16dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:background="#055905">
+            android:fillViewport="true">
 
-        <!-- Add Views here to represent the card piles (e.g., ImageViews for each card) -->
+        <GridLayout
+                android:id="@+id/solitaireBoard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="7"
+                android:padding="75dp"
+                android:background="#055905">
+            <!-- Add Views here to represent the card piles (e.g., ImageViews for each card) -->
+        </GridLayout>
 
-
-    </GridLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
