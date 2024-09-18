@@ -181,7 +181,7 @@ public class SolitaireFragment extends Fragment {
                 );
 
                 // Adjust overlapping margin for stacked cards
-                cardParams.topMargin = j * 60; // Adjust overlap between cards
+                cardParams.topMargin = j * 35; // Adjust overlap between cards
                 cardView.setLayoutParams(cardParams);
 
                 tableauLayout.addView(cardView);
