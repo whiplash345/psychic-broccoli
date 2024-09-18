@@ -69,11 +69,11 @@ public class SolitaireFragment extends Fragment {
     }
 
     private int getScaledWidth() {
-        return (int) (ORIGINAL_WIDTH * 1.5); // Adjust this value as needed
+        return (int) (ORIGINAL_WIDTH * 1.15); // Adjust this value as needed
     }
 
     private int getScaledHeight() {
-        return (int) (ORIGINAL_HEIGHT * 1.5); // Adjust this value as needed
+        return (int) (ORIGINAL_HEIGHT * 1.15); // Adjust this value as needed
     }
 
     private void initializeGameBoard(View root) {
@@ -137,7 +137,7 @@ public class SolitaireFragment extends Fragment {
         addWastePile(solitaireBoard, isLarge);
 
         // Set vertical offset to move tableau piles below stock/waste piles
-        int verticalOffset = getScaledHeight() - 300; // Adjust as needed
+        int verticalOffset = getScaledHeight() - 200; // Adjust as needed
 
         // Get the total width of the screen to distribute columns evenly
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
