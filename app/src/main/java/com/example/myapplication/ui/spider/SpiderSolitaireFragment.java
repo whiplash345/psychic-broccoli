@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.spider;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import java.util.ArrayList;
 public class SpiderSolitaireFragment extends Fragment {
 
     private Button playButton;
+    private ImageView GameImage;
     private Deck deck;
     private ArrayList<ArrayList<Card>> boardPiles;
 
@@ -34,6 +36,7 @@ public class SpiderSolitaireFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_spider, container, false);
 
         playButton = view.findViewById(R.id.play);
+        GameImage = view.findViewById(R.id.imageView2);
 
         // Correctly reference each pile layout
         pileLayouts[0] = view.findViewById(R.id.pile1);
@@ -53,6 +56,7 @@ public class SpiderSolitaireFragment extends Fragment {
                 ViewGroup layout = (ViewGroup) playButton.getParent();
                 if (layout != null) {
                     layout.removeView(playButton); // Remove the Play button after the game starts
+                    layout.removeView(GameImage);
                 }
                 startNewGame();
             }
@@ -70,7 +74,7 @@ public class SpiderSolitaireFragment extends Fragment {
     }
 
     private void dealCardsToBoard() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {  // Iterate through all 10 piles
             ArrayList<Card> pile = new ArrayList<>();
             int cardsInPile = (i < 4) ? 6 : 5;  // First 4 piles get 6 cards, the rest get 5
 
@@ -80,16 +84,23 @@ public class SpiderSolitaireFragment extends Fragment {
                     pile.add(card);
                 }
             }
-            boardPiles.add(pile);
+
+            // Flip the last card in each pile to face-up
+            if (!pile.isEmpty()) {
+                pile.get(pile.size() - 1).setFaceUp(true);
+            }
+
+            boardPiles.add(pile);  // Add the pile to the board
         }
     }
 
     private void displayBoard() {
         for (int i = 0; i < pileLayouts.length; i++) {
-            pileLayouts[i].removeAllViews();
+            pileLayouts[i].removeAllViews();  // Clear previous views
             ArrayList<Card> pile = boardPiles.get(i);
 
-            for (Card card : pile) {
+            for (int j = 0; j < pile.size(); j++) {
+                Card card = pile.get(j);
                 ImageView cardView = new ImageView(getContext());
 
                 // Set the card image (front or back depending on the card state)
@@ -104,7 +115,10 @@ public class SpiderSolitaireFragment extends Fragment {
                         dpToPx(80),  // Width in dp
                         dpToPx(120)  // Height in dp
                 );
-                layoutParams.setMargins(0, -80, 0, 0);  // Adjust margins to overlap cards
+                // Adjust margins to overlap cards if needed
+                if (j > 0) {
+                    layoutParams.setMargins(0, -80, 0, 0);  // Adjust as needed for overlapping effect
+                }
                 cardView.setLayoutParams(layoutParams);
 
                 pileLayouts[i].addView(cardView);

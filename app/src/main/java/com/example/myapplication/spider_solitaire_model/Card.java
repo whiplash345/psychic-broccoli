@@ -1,5 +1,6 @@
 package com.example.myapplication.spider_solitaire_model;
 
+import android.util.Log;
 import com.example.myapplication.R;
 
 import java.util.HashMap;
@@ -11,7 +12,8 @@ public class Card {
     }
 
     public enum Ranks{
-        Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King;
+        aaceofspades, a2ofspades, a3ofspades, a4ofspades, a5ofspades, a6ofspades, a7ofspades
+        , aeightofspades, a9ofspades, a10ofspades, ajackofspades, aqueenofspades, akingofspades;
     }
 
     private final Suits suit;
@@ -56,12 +58,21 @@ public class Card {
         return IsFaceUp;
     }
     public void setFaceUp(boolean faceUp) {
-        IsFaceUp = faceUp;
+        IsFaceUp = true;
     }
 
     public static int getCardImageResource(Card card) {
-        String key = card.getSuit().name().toLowerCase() + "_" + card.getRank().name().toLowerCase();
-        return cardImageMap.getOrDefault(key, R.drawable.spiderback);  // Return card back if not found
+        if (cardImageMap == null) {
+            Log.e("CardImage", "cardImageMap is null");
+            return R.drawable.spiderback; // Return default image if map is null
+        }
+
+        String key = card.getRank().name().toLowerCase(); // The rank already includes the suit
+
+        Log.d("CardImage", "Looking for card image with key: " + key);
+
+        // Return the card image from the map, or a default image if the key is not found
+        return cardImageMap.getOrDefault(key, R.drawable.spiderback);
     }
 
 }

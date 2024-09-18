@@ -1,6 +1,7 @@
 package com.example.myapplication.ui.solitaire;
 
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.model.Card;
 import com.example.myapplication.model.FoundationPile;
 import com.example.myapplication.model.TableauPile;
+import com.example.myapplication.MainActivity;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -119,44 +121,55 @@ public class SolitaireFragment extends Fragment {
         // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
-        // Set how much to move the entire tableau pile (column) down
-        int verticalOffset = 100; // Adjust this value as needed
+        // Access MainActivity to get the TextToSpeech instance
+        MainActivity mainActivity = (MainActivity) getActivity();
+        TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        // Set the vertical overlap between cards. Reduce this value to increase overlap.
+        int verticalOverlap = 50; // Adjust this value to control the overlap
 
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
 
             // Create a FrameLayout for each tableau pile
-            FrameLayout tableauLayout = new FrameLayout(getContext());
-            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-            layoutParams.columnSpec = GridLayout.spec(i);
-            layoutParams.width = GridLayout.LayoutParams.WRAP_CONTENT;
-            layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            FrameLayout frameLayout = new FrameLayout(getContext());
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.columnSpec = GridLayout.spec(i);
+            frameLayout.setLayoutParams(params);
 
-            // Add top margin to move the column downwards
-            layoutParams.topMargin = verticalOffset;
-
-            tableauLayout.setLayoutParams(layoutParams);
-
-            // Add cards to FrameLayout, which will stack them
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
-                Card card = tableauPile.getCards().get(j);
+                Card card = tableauPile.getCards().get(j);  // Get the current card
+
+                // Create ImageView for the card
                 ImageView cardView = createCardView(card, isLarge);
 
-                // Stack cards with overlapping
+                // Set layout parameters for cardView to create overlap
                 FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.WRAP_CONTENT,
                         FrameLayout.LayoutParams.WRAP_CONTENT
                 );
-
-                // Adjust overlapping as needed
-                cardParams.topMargin = j * 60;
+                cardParams.topMargin = j * verticalOverlap;  // Adjust this value to control overlap
                 cardView.setLayoutParams(cardParams);
 
-                tableauLayout.addView(cardView);
+                // Set OnClickListener for each card to speak its name (only if face-up)
+                cardView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (card.isFaceUp()) { // Only speak if the card is face-up
+                            String cardName = card.getValue() + " of " + card.getSuit();
+                            if (tts != null) {
+                                tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                            }
+                        }
+                    }
+                });
+
+                // Add the card to the FrameLayout (the tableau pile)
+                frameLayout.addView(cardView);
             }
 
-            // Add the tableau pile to the GridLayout
-            solitaireBoard.addView(tableauLayout);
+            // Add the FrameLayout (tableau pile) to the GridLayout
+            solitaireBoard.addView(frameLayout);
         }
     }
 

@@ -8,11 +8,12 @@ public class Deck {
     public List<Card> cards;
 
     public Deck() {
-        cards = new ArrayList<Card>();
-        for (Card.Suits suit : Card.Suits.values()) {
-            for (Card.Ranks rank : Card.Ranks.values()) {
-                cards.add(new Card(suit, rank));
-                cards.add(new Card(suit, rank)); // Spider Solitaire uses 2 decks
+        cards = new ArrayList<>();
+        // Add four of each card rank for the spades suit
+        for (Card.Ranks rank : Card.Ranks.values()) {
+            // Add four of each card rank
+            for (int i = 0; i < 4; i++) {
+                cards.add(new Card(Card.Suits.Spades, rank));
             }
         }
         Shuffle();
