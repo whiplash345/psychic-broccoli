@@ -136,7 +136,10 @@ public class SolitaireFragment extends Fragment {
         // Add the waste pile (column 1, row 0)
         addWastePile(solitaireBoard, isLarge);
 
-        // Set vertical offset to move tableau piles below stock/waste piles
+        // Add the four foundation piles (columns 3-6, row 0)
+        addFoundationPiles(solitaireBoard, isLarge);
+
+        // Set vertical offset to move tableau piles below stock/waste/foundation piles
         int verticalOffset = getScaledHeight() - 200; // Adjust as needed
 
         // Get the total width of the screen to distribute columns evenly
@@ -165,7 +168,7 @@ public class SolitaireFragment extends Fragment {
             layoutParams.leftMargin = 0;
             layoutParams.rightMargin = 0;
 
-            // Add top margin to move the tableau piles down (from stock/waste piles)
+            // Add top margin to move the tableau piles down (from stock/waste/foundation piles)
             layoutParams.topMargin = verticalOffset;
 
             tableauLayout.setLayoutParams(layoutParams);
@@ -268,6 +271,38 @@ public class SolitaireFragment extends Fragment {
         solitaireBoard.addView(wastePileView);
     }
 
+    private void addFoundationPiles(GridLayout solitaireBoard, Boolean isLarge) {
+        for (int i = 0; i < foundationPiles.size(); i++) {
+            ImageView foundationPileView = new ImageView(getContext());
+
+            FoundationPile foundationPile = foundationPiles.get(i);
+
+            Card topCard = foundationPile.peekTopCard();
+
+            // Set the image for the top card if it exists, otherwise show the transparent background
+            if (topCard != null) {
+                foundationPileView.setImageResource(getCardDrawableResource(topCard, isLarge));
+            } else {
+                foundationPileView.setImageResource(R.drawable.backgroundtransparent);
+            }
+
+            int scaledWidth = getScaledWidth();
+            int scaledHeight = getScaledHeight();
+
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+            layoutParams.width = scaledWidth;
+            layoutParams.height = scaledHeight;
+
+            layoutParams.columnSpec = GridLayout.spec(3 + i); // Columns 3, 4, 5, 6
+            layoutParams.rowSpec = GridLayout.spec(0);        // Row 0
+            layoutParams.topMargin = 100; // Adjust as needed
+
+            foundationPileView.setLayoutParams(layoutParams);
+            foundationPileView.setScaleType(ImageView.ScaleType.FIT_XY);
+
+            solitaireBoard.addView(foundationPileView);
+        }
+    }
 
     private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
