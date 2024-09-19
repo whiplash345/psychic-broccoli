@@ -118,7 +118,7 @@ public class SolitaireFragment extends Fragment {
 
     private List<Card> createDeck() {
         String[] suits = {"Hearts", "Diamonds", "Clubs", "Spades"};
-        String[] values = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
+        String[] values = {"Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King"};
         List<Card> deck = new ArrayList<>();
         for (String suit : suits) {
             for (String value : values) {
@@ -137,9 +137,13 @@ public class SolitaireFragment extends Fragment {
 
         // Add the waste pile (column 1, row 0)
         addWastePile(solitaireBoard, isLarge);
+
         // Access MainActivity to get the TextToSpeech instance
         MainActivity mainActivity = (MainActivity) getActivity();
         TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        // Observe the TTS enabled state
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
 
         // Set the vertical overlap between cards. Reduce this value to increase overlap.
         int verticalOverlap = 50; // Adjust this value to control the overlap
@@ -201,7 +205,7 @@ public class SolitaireFragment extends Fragment {
                 cardView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (card.isFaceUp()) { // Only speak if the card is face-up
+                        if (card.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
                             String cardName = card.getValue() + " of " + card.getSuit();
                             if (tts != null) {
                                 tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
@@ -245,7 +249,6 @@ public class SolitaireFragment extends Fragment {
         solitaireBoard.addView(stockPileView);
     }
 
-
     private void drawFromStock() {
         if (!stockPile.isEmpty()) {
             // Draw the top card from the stock pile
@@ -267,15 +270,40 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void addWastePile(GridLayout solitaireBoard, Boolean isLarge) {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        // Observe the TTS enabled state
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
+
         ImageView wastePileView = new ImageView(getContext());
 
         if (!wastePile.isEmpty()) {
+            // Get the top card of the waste pile
             Card topCard = wastePile.peek();
+
+            // Set the image for the top card
             wastePileView.setImageResource(getCardDrawableResource(topCard, isLarge));
+
+            // Set OnClickListener for TTS (only if the top card is face-up)
+            wastePileView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (topCard.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
+                        String cardName = topCard.getValue() + " of " + topCard.getSuit();
+                        if (tts != null) {
+                            tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                        }
+                    }
+                }
+            });
+
         } else {
-            wastePileView.setImageResource(R.drawable.backgroundtransparent); // Empty waste pile image
+            // If the waste pile is empty, show a transparent background
+            wastePileView.setImageResource(R.drawable.backgroundtransparent);
         }
 
+        // Set the dimensions and layout for the waste pile
         int scaledWidth = getScaledWidth();
         int scaledHeight = getScaledHeight();
 
@@ -286,44 +314,66 @@ public class SolitaireFragment extends Fragment {
         layoutParams.rowSpec = GridLayout.spec(0);    // Place in row 0
         layoutParams.topMargin = 100; // Adjust top margin if necessary
 
-        // Remove left margin to align it with the second tableau pile
+        // Align with the stock pile
         layoutParams.leftMargin = 0;
 
         wastePileView.setLayoutParams(layoutParams);
         wastePileView.setScaleType(ImageView.ScaleType.FIT_XY);
 
+        // Add the waste pile view to the solitaire board
         solitaireBoard.addView(wastePileView);
     }
 
     private void addFoundationPiles(GridLayout solitaireBoard, Boolean isLarge) {
+        MainActivity mainActivity = (MainActivity) getActivity();
+        TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
+
         for (int i = 0; i < foundationPiles.size(); i++) {
-            ImageView foundationPileView = new ImageView(getContext());
-
             FoundationPile foundationPile = foundationPiles.get(i);
-
             Card topCard = foundationPile.peekTopCard();
 
-            // Set the image for the top card if it exists, otherwise show the transparent background
+            // Create an ImageView for the top card of each foundation pile
+            ImageView foundationPileView = new ImageView(getContext());
+
+            // Check if there's a top card
             if (topCard != null) {
+                // Set the image of the top card
                 foundationPileView.setImageResource(getCardDrawableResource(topCard, isLarge));
+
+                // Set OnClickListener for TTS without changing card's position
+                foundationPileView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (topCard.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
+                            String cardName = topCard.getValue() + " of " + topCard.getSuit();
+                            if (tts != null) {
+                                tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                            }
+                        }
+                    }
+                });
             } else {
+                // If no card is present in the foundation pile, show a transparent background
                 foundationPileView.setImageResource(R.drawable.backgroundtransparent);
             }
 
+            // Set layout params for foundation piles
             int scaledWidth = getScaledWidth();
             int scaledHeight = getScaledHeight();
 
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
             layoutParams.width = scaledWidth;
             layoutParams.height = scaledHeight;
-
             layoutParams.columnSpec = GridLayout.spec(3 + i); // Columns 3, 4, 5, 6
             layoutParams.rowSpec = GridLayout.spec(0);        // Row 0
-            layoutParams.topMargin = 100; // Adjust as needed
+            layoutParams.topMargin = 100; // Adjust top margin as necessary
 
             foundationPileView.setLayoutParams(layoutParams);
             foundationPileView.setScaleType(ImageView.ScaleType.FIT_XY);
 
+            // Add the foundation pile view to the solitaire board
             solitaireBoard.addView(foundationPileView);
         }
     }
@@ -365,13 +415,13 @@ public class SolitaireFragment extends Fragment {
         String cardName;
 
         // Handle special names for aces, jacks, queens, kings
-        if ("A".equals(value)) {
+        if ("Ace".equals(value)) {
             cardName = "aaceof" + suit.toLowerCase();
-        } else if ("J".equals(value)) {
+        } else if ("Jack".equals(value)) {
             cardName = "ajackof" + suit.toLowerCase();
-        } else if ("Q".equals(value)) {
+        } else if ("Queen".equals(value)) {
             cardName = "aqueenof" + suit.toLowerCase();
-        } else if ("K".equals(value)) {
+        } else if ("King".equals(value)) {
             cardName = "akingof" + suit.toLowerCase();
         } else {
             // Prefix 'a' for numbered cards (2-10)
