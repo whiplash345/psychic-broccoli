@@ -1,22 +1,16 @@
 package com.example.myapplication.ui.spider;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
 import com.example.myapplication.spider_solitaire_model.Card;
-import com.example.myapplication.spider_solitaire_model.CardAdapter;
 import com.example.myapplication.spider_solitaire_model.Deck;
-import java.io.PrintStream;
 import java.util.ArrayList;
 
 
@@ -66,7 +60,7 @@ public class SpiderSolitaireFragment extends Fragment {
     }
 
     private void startNewGame() {
-        deck = new Deck();  // Initialize and shuffle the deck
+        deck = new Deck();// Initialize and shuffle the deck
         boardPiles = new ArrayList<>();  // Create the piles
 
         dealCardsToBoard();
@@ -113,11 +107,11 @@ public class SpiderSolitaireFragment extends Fragment {
                 // Set the desired width and height for the card
                 LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
                         dpToPx(80),  // Width in dp
-                        dpToPx(120)  // Height in dp
+                        dpToPx(140)  // Height in dp
                 );
                 // Adjust margins to overlap cards if needed
                 if (j > 0) {
-                    layoutParams.setMargins(0, -80, 0, 0);  // Adjust as needed for overlapping effect
+                    layoutParams.setMargins(0, -180, 0, 0);  // Adjust as needed for overlapping effect
                 }
                 cardView.setLayoutParams(layoutParams);
 
