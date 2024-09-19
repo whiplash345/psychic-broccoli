@@ -19,6 +19,7 @@ public class SolitaireViewModel extends ViewModel {
 
     // Card size state
     private final MutableLiveData<Boolean> isLargeCard = new MutableLiveData<>(false);
+    private final MutableLiveData<Boolean> isTtsEnabled = new MutableLiveData<>(false);
 
     // Getters and Setters for game state
     public List<TableauPile> getTableauPiles() {
@@ -60,5 +61,12 @@ public class SolitaireViewModel extends ViewModel {
 
     public LiveData<Boolean> getIsLargeCard() {
         return isLargeCard;
+    }
+    public LiveData<Boolean> getIsTtsEnabled() {
+        return isTtsEnabled;
+    }
+
+    public void setTtsEnabled(boolean isEnabled) {
+        isTtsEnabled.setValue(isEnabled);
     }
 }
