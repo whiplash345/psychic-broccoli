@@ -1,10 +1,8 @@
 package com.example.myapplication;
 
 import android.os.Bundle;
-import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
@@ -14,15 +12,11 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.navigation.NavigationView;
 import com.example.myapplication.databinding.ActivityMainBinding;
 
-import java.util.Locale;
-
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
-    private TextToSpeech textToSpeech;
     private Button PlayButton;
-    int i;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,15 +42,6 @@ public class MainActivity extends AppCompatActivity {
 
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
-
-        textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    textToSpeech.setLanguage(Locale.US);  // Set TTS language
-                }
-            }
-        });
     }
 
 
@@ -68,10 +53,6 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = navHostFragment.getNavController();
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
-    }
-
-    public TextToSpeech getTextToSpeech() {
-        return textToSpeech;
     }
 
 }
