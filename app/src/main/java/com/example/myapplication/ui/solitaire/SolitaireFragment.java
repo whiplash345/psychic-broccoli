@@ -15,6 +15,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.model.Card;
 import com.example.myapplication.model.FoundationPile;
 import com.example.myapplication.model.TableauPile;
+import com.example.myapplication.model.Pile;
 import com.example.myapplication.MainActivity;
 
 import java.util.ArrayList;
@@ -378,20 +379,57 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
+    public boolean canMoveToTableauPile(Card card, TableauPile tableauPile) {
+        // Check if the tableau pile can accept the card
+        return tableauPile.canAddCard(card);
+    }
+
+    public boolean canMoveToFoundationPile(Card card, FoundationPile foundationPile) {
+        // Check if the foundation pile can accept the card
+        return foundationPile.canAddCard(card);
+    }
+
+    public boolean moveCardToTableau(TableauPile targetPile, Pile sourcePile) {
+        // Check if source pile has any cards
+        if (sourcePile.isEmpty()) {
+            return false;
+        }
+
+        // Get the top card of the source pile
+        Card cardToMove = sourcePile.peekTopCard();
+
+        // Check if the card can be added to the tableau pile
+        if (targetPile.canAddCard(cardToMove)) {
+            // Remove the card from the source pile and add it to the target pile
+            targetPile.addCard(sourcePile.removeCard());
+            return true;
+        }
+
+        return false; // Move is invalid
+    }
+
+    public boolean moveCardFromWaste(Pile wastePile, TableauPile tableauPile) {
+        // Check if waste pile has any cards
+        if (wastePile.isEmpty()) {
+            return false;
+        }
+
+        // Get the top card of the waste pile
+        Card cardToMove = wastePile.peekTopCard();
+
+        // Check if the card can be moved to the tableau pile
+        if (tableauPile.canAddCard(cardToMove)) {
+            // Move the card from waste to tableau
+            tableauPile.addCard(wastePile.removeCard());
+            return true;
+        }
+
+        return false; // Move is invalid
+    }
+
     private ImageView createCardView(Card card, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
 
-        int scaledWidth = getScaledWidth();
-        int scaledHeight = getScaledHeight();
-
-        // Set the fixed size of the ImageView
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
-        cardView.setLayoutParams(layoutParams);
-
-        // Set scale type to ensure the card is resized properly
-        cardView.setScaleType(ImageView.ScaleType.FIT_XY);
-
-        // Set the card image (face-up or face-down)
         if (card.isFaceUp()) {
             int resId = getCardDrawableResource(card, isLarge);
             cardView.setImageResource(resId);
@@ -400,10 +438,12 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
-        // Set onClick listener for flipping cards
-        cardView.setOnClickListener(view -> {
-            card.flip();
-            cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
+        cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                card.flip();
+                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
+            }
         });
 
         return cardView;
