@@ -3,8 +3,8 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         tools:context="com.example.myapplication.ui.spider.SpiderSolitaireFragment">
 
     <!-- Game board background -->
@@ -13,12 +13,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="16dp"
-            android:background="@color/casino_green"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:background="@color/casino_green">
 
         <!-- Button to start the game -->
         <Button
@@ -29,114 +24,99 @@
                 android:layout_height="60dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginVertical="560dp"
-                android:backgroundTint="@color/design_default_color_secondary_variant" />
+                android:backgroundTint="@color/design_default_color_secondary_variant"/>
 
         <!-- Placeholder for each pile with proper constraints -->
         <LinearLayout
                 android:id="@+id/pile1"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="40dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile2"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="110dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="130dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile1"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile3"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="200dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="220dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile2"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile4"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="290dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="310dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile3"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile5"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="380dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="410dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile4"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile6"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="470dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="500dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile5"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile7"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="560dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="590dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile6"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile8"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="650dp"
-                android:layout_marginVertical="80dp"
+                android:layout_marginHorizontal="680dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile7"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile9"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="740dp"
-                android:layout_marginVertical="20dp"
+                android:layout_marginHorizontal="770dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile8"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
 
         <LinearLayout
                 android:id="@+id/pile10"
                 android:orientation="vertical"
-                android:layout_marginHorizontal="830dp"
-                android:layout_marginVertical="20dp"
+                android:layout_marginHorizontal="860dp"
+                android:layout_marginVertical="200dp"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintStart_toEndOf="@id/pile9"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="match_parent"/>
         <ImageView
-                android:src="@drawable/spider_solitaire_inpixio"
+                android:id="@+id/imageView2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
                 android:layout_gravity="center_horizontal"
-                android:id="@+id/imageView2"/>
+                android:src="@drawable/spider_solitaire_inpixio"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
 
     </FrameLayout>
 
