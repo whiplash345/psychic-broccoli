@@ -297,6 +297,20 @@ public class SolitaireFragment extends Fragment {
                 }
             });
 
+            // Set OnTouchListener to start drag event when card is touched
+            wastePileView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        // Create a drag shadow and initiate drag event
+                        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(wastePileView);
+                        view.startDrag(null, shadowBuilder, wastePile.peek(), 0); // Pass the top card as localState
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
         } else {
             // If the waste pile is empty, show a transparent background
             wastePileView.setImageResource(R.drawable.backgroundtransparent);
