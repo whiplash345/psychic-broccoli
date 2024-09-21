@@ -2,9 +2,7 @@ package com.example.myapplication.ui.solitaire;
 
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
@@ -408,6 +406,25 @@ public class SolitaireFragment extends Fragment {
         return false; // Move is invalid
     }
 
+    public boolean moveCardToFoundation(FoundationPile targetPile, Pile sourcePile) {
+        // Check if source pile has any cards
+        if (sourcePile.isEmpty()) {
+            return false;
+        }
+
+        // Get the top card of the source pile
+        Card cardToMove = sourcePile.peekTopCard();
+
+        // Check if the card can be added to the foundation pile
+        if (canMoveToFoundationPile(cardToMove, targetPile)) {
+            // Remove the card from the source pile and add it to the target pile
+            targetPile.addCard(sourcePile.removeCard());
+            return true;
+        }
+
+        return false; // Move is invalid
+    }
+
     public boolean moveCardFromWaste(Pile wastePile, TableauPile tableauPile) {
         // Check if waste pile has any cards
         if (wastePile.isEmpty()) {
@@ -438,15 +455,89 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
-        cardView.setOnClickListener(new View.OnClickListener() {
+        // Set OnTouchListener to start drag event when card is touched
+        cardView.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                card.flip();
-                cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                    // Create drag shadow and initiate drag event
+                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                    view.startDrag(null, shadowBuilder, card, 0);
+                    return true;
+                }
+                return false;
             }
         });
 
         return cardView;
+    }
+
+    private void addTableauPileDragListeners(FrameLayout tableauLayout, TableauPile tableauPile) {
+        tableauLayout.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DRAG_STARTED:
+                        return true;
+
+                    case DragEvent.ACTION_DROP:
+                        // Retrieve the card being dragged
+                        Card draggedCard = (Card) event.getLocalState();
+
+                        // Check if the move is valid
+                        if (canMoveToTableauPile(draggedCard, tableauPile)) {
+                            // Move the card to the tableau pile
+                            moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
+                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                            return true;
+                        }
+                        return false;
+
+                    default:
+                        return false;
+                }
+            }
+        });
+    }
+
+    private Pile getSourcePileForCard(Card card) {
+        // Check the tableau piles
+        for (TableauPile tableauPile : tableauPiles) {
+            if (tableauPile.containsCard(card)) {
+                return tableauPile;
+            }
+        }
+
+        // Check the waste pile (now a Stack<Card>)
+        if (wastePile.contains(card)) {
+            // wastePile is not Pile type, so return null here
+            // TODO: Revisit this part and see whether wastePile or getSourcePileForCard needs to be refactored to be a different type
+            return null;
+        }
+
+        // If the card is not found, return null or handle the case accordingly
+        return null;
+    }
+
+    private void addFoundationPileDragListeners(ImageView foundationPileView, FoundationPile foundationPile) {
+        foundationPileView.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DROP:
+                        Card draggedCard = (Card) event.getLocalState();
+                        if (canMoveToFoundationPile(draggedCard, foundationPile)) {
+                            moveCardToFoundation(foundationPile, getSourcePileForCard(draggedCard));
+                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                            return true;
+                        }
+                        return false;
+
+                    default:
+                        return false;
+                }
+            }
+        });
     }
 
     private int getCardDrawableResource(Card card, Boolean isLarge) {
