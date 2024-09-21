@@ -3,11 +3,13 @@ package com.example.myapplication.model;
 public class TableauPile extends Pile {
 
     public boolean canAddCard(Card card) {
-        if (isEmpty()) {
-            return "K".equals(card.getValue()); // Only Kings can be placed on empty tableau
+        if (cards.isEmpty()) {
+            // If the tableau is empty, only a King can be placed.
+            return "King".equals(card.getValue());
+        } else {
+            Card topCard = peekTopCard();
+            return !card.isSameColor(topCard) && card.isOneRankLower(topCard);
         }
-        Card topCard = peekTopCard();
-        return isAlternatingColor(card, topCard) && isOneRankLower(card, topCard);
     }
 
     private boolean isAlternatingColor(Card card, Card topCard) {

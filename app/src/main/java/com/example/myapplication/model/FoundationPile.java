@@ -3,11 +3,13 @@ package com.example.myapplication.model;
 public class FoundationPile extends Pile {
 
     public boolean canAddCard(Card card) {
-        if (isEmpty()) {
-            return "A".equals(card.getValue()); // Only Aces can start the foundation
+        if (cards.isEmpty()) {
+            // Only an Ace can be placed in an empty foundation pile.
+            return "Ace".equals(card.getValue());
+        } else {
+            Card topCard = peekTopCard();
+            return card.getSuit().equals(topCard.getSuit()) && card.isOneRankHigher(topCard);
         }
-        Card topCard = peekTopCard();
-        return topCard.getSuit().equals(card.getSuit()) && isOneRankHigher(card, topCard);
     }
 
     private boolean isOneRankHigher(Card card, Card topCard) {
