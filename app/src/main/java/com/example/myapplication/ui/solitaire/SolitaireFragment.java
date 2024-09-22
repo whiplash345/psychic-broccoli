@@ -131,94 +131,64 @@ public class SolitaireFragment extends Fragment {
         // Clear the board before rendering
         solitaireBoard.removeAllViews();
 
-        // Add the stock pile (column 0, row 0)
-        addStockPile(solitaireBoard, isLarge);
-
-        // Add the waste pile (column 1, row 0)
-        addWastePile(solitaireBoard, isLarge);
-
-        // Access MainActivity to get the TextToSpeech instance
+        // Access MainActivity and the TextToSpeech instance
         MainActivity mainActivity = (MainActivity) getActivity();
         TextToSpeech tts = mainActivity.getTextToSpeech();
 
         // Observe the TTS enabled state
         boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
 
-        // Set the vertical overlap between cards. Reduce this value to increase overlap.
-        int verticalOverlap = 50; // Adjust this value to control the overlap
+        // Set card overlap value and margins
+        int verticalOverlap = 50; // Adjust for card overlap
+        int verticalOffset = getScaledHeight() - 200; // Adjust positioning
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int tableauColumnWidth = screenWidth / 7; // Divide width into 7 columns
 
-        // Add the four foundation piles (columns 3-6, row 0)
+        // Render piles
+        addStockPile(solitaireBoard, isLarge);
+        addWastePile(solitaireBoard, isLarge);
         addFoundationPiles(solitaireBoard, isLarge);
 
-        // Set vertical offset to move tableau piles below stock/waste/foundation piles
-        int verticalOffset = getScaledHeight() - 200; // Adjust as needed
-
-        // Get the total width of the screen to distribute columns evenly
-        int screenWidth = getResources().getDisplayMetrics().widthPixels;
-
-        // Calculate an equal width for each tableau pile (dividing by 7 columns)
-        int tableauColumnWidth = screenWidth / 7;
-
-        // Render tableau piles starting from column 0, but on the next row (row 1)
+        // Render tableau piles
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
+            FrameLayout tableauLayout = createTableauLayout(i, tableauColumnWidth, verticalOffset);
+            addCardsToTableau(tableauLayout, tableauPile, isLarge, isTtsEnabled, tts);
+            solitaireBoard.addView(tableauLayout);
+        }
+    }
 
-            // Create a FrameLayout for each tableau pile
-            FrameLayout tableauLayout = new FrameLayout(getContext());
-            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+    private FrameLayout createTableauLayout(int columnIndex, int tableauColumnWidth, int verticalOffset) {
+        FrameLayout tableauLayout = new FrameLayout(getContext());
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
 
-            // Set each tableau pile in its respective column
-            layoutParams.columnSpec = GridLayout.spec(i); // Place in column 0-6
-            layoutParams.rowSpec = GridLayout.spec(1);    // Place in row 1
+        layoutParams.columnSpec = GridLayout.spec(columnIndex); // Column 0-6
+        layoutParams.rowSpec = GridLayout.spec(1); // Row 1
+        layoutParams.width = tableauColumnWidth; // Equal width for each column
+        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+        layoutParams.topMargin = verticalOffset;
 
-            // Set consistent width for each column
-            layoutParams.width = tableauColumnWidth; // Each column has equal width
-            layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+        tableauLayout.setLayoutParams(layoutParams);
+        return tableauLayout;
+    }
 
-            // Remove any left or right margins to avoid gaps
-            layoutParams.leftMargin = 0;
-            layoutParams.rightMargin = 0;
+    private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPile, Boolean isLarge, boolean isTtsEnabled, TextToSpeech tts) {
+        for (int j = 0; j < tableauPile.getCards().size(); j++) {
+            Card card = tableauPile.getCards().get(j);
 
-            // Add top margin to move the tableau piles down (from stock/waste/foundation piles)
-            layoutParams.topMargin = verticalOffset;
+            // Create ImageView for the card
+            ImageView cardView = createCardView(card, isLarge);
+            FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(getScaledWidth(), getScaledHeight());
+            cardParams.topMargin = j * 35; // Adjust card overlap
 
-            tableauLayout.setLayoutParams(layoutParams);
+            cardView.setLayoutParams(cardParams);
 
-            // Add cards to FrameLayout, stacking them with overlapping
-            for (int j = 0; j < tableauPile.getCards().size(); j++) {
-                Card card = tableauPile.getCards().get(j);  // Get the current card
-
-                // Create ImageView for the card
-                ImageView cardView = createCardView(card, isLarge);
-
-                // Set layout parameters for cardView to create overlap
-                FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
-                        getScaledWidth(), getScaledHeight() // Ensure sizes are scaled
-                );
-
-                // Adjust overlapping margin for stacked cards
-                cardParams.topMargin = j * 35; // Adjust overlap between cards
-                cardView.setLayoutParams(cardParams);
-
-                // Set OnClickListener for each card to speak its name (only if face-up)
-                cardView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (card.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
-                            String cardName = card.getValue() + " of " + card.getSuit();
-                            if (tts != null) {
-                                tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
-                            }
-                        }
-                    }
-                });
-
-                // Add the card to the FrameLayout (the tableau pile)
-                tableauLayout.addView(cardView);
+            // Set up card click for TTS (if enabled and card is face-up)
+            if (card.isFaceUp() && isTtsEnabled) {
+                cardView.setOnClickListener(v -> tts.speak(card.getValue() + " of " + card.getSuit(), TextToSpeech.QUEUE_FLUSH, null, null));
             }
 
-            // Add the FrameLayout (tableau pile) to the GridLayout
-            solitaireBoard.addView(tableauLayout);
+            tableauLayout.addView(cardView);
         }
     }
 
