@@ -154,6 +154,10 @@ public class SolitaireFragment extends Fragment {
             TableauPile tableauPile = tableauPiles.get(i);
             FrameLayout tableauLayout = createTableauLayout(i, tableauColumnWidth, verticalOffset);
             addCardsToTableau(tableauLayout, tableauPile, isLarge, isTtsEnabled, tts);
+
+            // Add drag listeners for moving cards to tableau
+            addTableauPileDragListeners(tableauLayout, tableauPile);
+
             solitaireBoard.addView(tableauLayout);
         }
     }
@@ -353,6 +357,9 @@ public class SolitaireFragment extends Fragment {
                 foundationPileView.setImageResource(R.drawable.backgroundtransparent);
             }
 
+            // Add drag listeners for moving cards to foundation
+            addFoundationPileDragListeners(foundationPileView, foundationPile);
+
             // Set layout params for foundation piles
             int scaledWidth = getScaledWidth();
             int scaledHeight = getScaledHeight();
@@ -493,12 +500,10 @@ public class SolitaireFragment extends Fragment {
                     return true;
 
                 case DragEvent.ACTION_DROP:
-                    // Retrieve the card being dragged
                     Card draggedCard = (Card) event.getLocalState();
 
                     // Check if the move is valid
                     if (canMoveToTableauPile(draggedCard, tableauPile)) {
-                        // Move the card to the tableau pile
                         moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
                         renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
                         return true;
