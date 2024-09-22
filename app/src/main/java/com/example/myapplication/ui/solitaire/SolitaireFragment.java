@@ -482,14 +482,28 @@ public class SolitaireFragment extends Fragment {
             }
         }
 
-        // Check the waste pile (now a Stack<Card>)
-        if (wastePile.contains(card)) {
-            // wastePile is not Pile type, so return null here
-            // TODO: Revisit this part and see whether wastePile or getSourcePileForCard needs to be refactored to be a different type
-            return null;
+        // Check if the card is in the waste pile
+        if (!wastePile.isEmpty() && wastePile.peek().equals(card)) {
+            // Create a temporary Pile-like structure for waste pile
+            return new Pile() {
+                @Override
+                public Card removeCard() {
+                    return wastePile.pop();
+                }
+
+                @Override
+                public boolean isEmpty() {
+                    return wastePile.isEmpty();
+                }
+
+                @Override
+                public Card peekTopCard() {
+                    return wastePile.peek();
+                }
+            };
         }
 
-        // If the card is not found, return null or handle the case accordingly
+        // If the card is not found in any pile, return null or handle accordingly
         return null;
     }
 
