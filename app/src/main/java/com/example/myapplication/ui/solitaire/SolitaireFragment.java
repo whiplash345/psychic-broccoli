@@ -2,6 +2,7 @@ package com.example.myapplication.ui.solitaire;
 
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
@@ -162,6 +163,10 @@ public class SolitaireFragment extends Fragment {
             addTableauPileDragListeners(tableauLayout, tableauPile);
 
             solitaireBoard.addView(tableauLayout);
+        }
+
+        for (TableauPile tableauPile : tableauPiles) {
+            Log.d("SolitaireFragment", "Tableau pile size after render: " + tableauPile.getCards().size());
         }
     }
 
@@ -384,6 +389,7 @@ public class SolitaireFragment extends Fragment {
 
     public boolean canMoveToTableauPile(Card card, TableauPile tableauPile) {
         // Check if the tableau pile can accept the card
+        Log.d("SolitaireFragment", "Attempting to move card: " + card.getValue() + " to tableau pile.");
         return tableauPile.canAddCard(card);
     }
 
@@ -395,6 +401,7 @@ public class SolitaireFragment extends Fragment {
     public boolean moveCardToTableau(TableauPile targetPile, Pile sourcePile) {
         // Check if source pile has any cards
         if (sourcePile.isEmpty()) {
+            Log.d("SolitaireFragment", "Source pile is empty after moving card.");
             return false;
         }
 
@@ -405,6 +412,7 @@ public class SolitaireFragment extends Fragment {
         if (targetPile.canAddCard(cardToMove)) {
             // Remove the card from the source pile and add it to the target pile
             targetPile.addCard(sourcePile.removeCard());
+            Log.d("SolitaireFragment", "Card moved. Source pile empty? " + sourcePile.isEmpty());
             return true;
         }
 
@@ -487,6 +495,9 @@ public class SolitaireFragment extends Fragment {
 
         // Check if the card is in the waste pile
         if (!wastePile.isEmpty() && wastePile.peek().equals(card)) {
+            Log.d("SolitaireFragment", "Dragging card from the waste pile.");
+            Log.d("SolitaireFragment", "Waste pile has King: " + (wastePile.peek().getValue().equals("King")));
+
             // Create a temporary Pile-like structure for waste pile
             return new Pile() {
                 @Override
@@ -518,6 +529,16 @@ public class SolitaireFragment extends Fragment {
 
                 case DragEvent.ACTION_DROP:
                     Card draggedCard = (Card) event.getLocalState();
+                    Log.d("SolitaireFragment", "Drag event action: " + event.getAction());
+                    Log.d("SolitaireFragment", "Dragging to tableau pile with size: " + tableauPile.getCards().size());
+                    Log.d("SolitaireFragment", "ACTION_DROP triggered on tableau pile with size: " + tableauPile.getCards().size());
+
+
+                    if (tableauPile != null) {
+                        Log.d("SolitaireFragment", "Target is a TableauPile.");
+                    } else {
+                        Log.d("SolitaireFragment", "Target is NOT a TableauPile.");
+                    }
 
                     // Check if the move is valid
                     if (canMoveToTableauPile(draggedCard, tableauPile)) {

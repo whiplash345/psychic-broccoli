@@ -1,10 +1,15 @@
 package com.example.myapplication.model;
 
+import android.util.Log;
+
 public class TableauPile extends Pile {
 
     public boolean canAddCard(Card card) {
+        Log.d("TableauPile", "canAddCard called for card: " + card.getValue());
+        Log.d("TableauPile", "Tableau pile size: " + cards.size());
+
         if (cards.isEmpty()) {
-            // Only a King can be placed in an empty tableau pile.
+            Log.d("TableauPile", "Tableau pile is empty. Checking if King can be placed.");
             return "King".equals(card.getValue());
         } else {
             Card topCard = peekTopCard();
