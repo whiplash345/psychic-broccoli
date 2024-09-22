@@ -456,34 +456,6 @@ public class SolitaireFragment extends Fragment {
         return cardView;
     }
 
-    private void addTableauPileDragListeners(FrameLayout tableauLayout, TableauPile tableauPile) {
-        tableauLayout.setOnDragListener(new View.OnDragListener() {
-            @Override
-            public boolean onDrag(View v, DragEvent event) {
-                switch (event.getAction()) {
-                    case DragEvent.ACTION_DRAG_STARTED:
-                        return true;
-
-                    case DragEvent.ACTION_DROP:
-                        // Retrieve the card being dragged
-                        Card draggedCard = (Card) event.getLocalState();
-
-                        // Check if the move is valid
-                        if (canMoveToTableauPile(draggedCard, tableauPile)) {
-                            // Move the card to the tableau pile
-                            moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
-                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
-                            return true;
-                        }
-                        return false;
-
-                    default:
-                        return false;
-                }
-            }
-        });
-    }
-
     private Pile getSourcePileForCard(Card card) {
         // Check the tableau piles
         for (TableauPile tableauPile : tableauPiles) {
@@ -503,24 +475,42 @@ public class SolitaireFragment extends Fragment {
         return null;
     }
 
-    private void addFoundationPileDragListeners(ImageView foundationPileView, FoundationPile foundationPile) {
-        foundationPileView.setOnDragListener(new View.OnDragListener() {
-            @Override
-            public boolean onDrag(View v, DragEvent event) {
-                switch (event.getAction()) {
-                    case DragEvent.ACTION_DROP:
-                        Card draggedCard = (Card) event.getLocalState();
-                        if (canMoveToFoundationPile(draggedCard, foundationPile)) {
-                            moveCardToFoundation(foundationPile, getSourcePileForCard(draggedCard));
-                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
-                            return true;
-                        }
-                        return false;
+    private void addTableauPileDragListeners(FrameLayout tableauLayout, TableauPile tableauPile) {
+        tableauLayout.setOnDragListener((v, event) -> {
+            switch (event.getAction()) {
+                case DragEvent.ACTION_DRAG_STARTED:
+                    return true;
 
-                    default:
-                        return false;
+                case DragEvent.ACTION_DROP:
+                    // Retrieve the card being dragged
+                    Card draggedCard = (Card) event.getLocalState();
+
+                    // Check if the move is valid
+                    if (canMoveToTableauPile(draggedCard, tableauPile)) {
+                        // Move the card to the tableau pile
+                        moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
+                        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                        return true;
+                    }
+                    return false;
+
+                default:
+                    return false;
+            }
+        });
+    }
+
+    private void addFoundationPileDragListeners(ImageView foundationPileView, FoundationPile foundationPile) {
+        foundationPileView.setOnDragListener((v, event) -> {
+            if (event.getAction() == DragEvent.ACTION_DROP) {
+                Card draggedCard = (Card) event.getLocalState();
+                if (canMoveToFoundationPile(draggedCard, foundationPile)) {
+                    moveCardToFoundation(foundationPile, getSourcePileForCard(draggedCard));
+                    renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                    return true;
                 }
             }
+            return false;
         });
     }
 
