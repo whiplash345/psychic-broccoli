@@ -94,13 +94,16 @@ public class SolitaireFragment extends Fragment {
         List<Card> deck = createDeck();
         Collections.shuffle(deck);
 
+        // Distribute cards to tableau piles
         for (int i = 0; i < 7; i++) {
             for (int j = 0; j <= i; j++) {
                 Card card = deck.remove(0);
-                if (j == i) {
-                    card.flip();  // Ensure the last card in the pile is face up
-                }
-                tableauPiles.get(i).addCard(card);
+                // Pass false because we're in initialization phase
+                tableauPiles.get(i).addCard(card, false);
+            }
+            Card topCard = tableauPiles.get(i).peekTopCard();
+            if (!topCard.isFaceUp()) {
+                topCard.flip();
             }
         }
 
