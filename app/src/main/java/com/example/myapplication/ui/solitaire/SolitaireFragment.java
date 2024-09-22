@@ -234,8 +234,19 @@ public class SolitaireFragment extends Fragment {
             solitaireViewModel.setStockPile(stockPile);
             solitaireViewModel.setWastePile(wastePile);
         } else {
-            // TODO: If stock is empty, optionally reset the stock pile from the waste pile
+            // Reset stock pile if stock is empty and waste is not empty
+            if (!wastePile.isEmpty()) {
+                resetStockFromWaste();
+            }
         }
+    }
+
+    private void resetStockFromWaste() {
+        while (!wastePile.isEmpty()) {
+            stockPile.push(wastePile.pop());
+        }
+        solitaireViewModel.setStockPile(stockPile);
+        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
     }
 
     private void addWastePile(GridLayout solitaireBoard, Boolean isLarge) {
