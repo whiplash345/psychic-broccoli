@@ -228,8 +228,8 @@ public class SolitaireFragment extends Fragment {
             for (int j = 0; j < tableauPile.getCards().size(); j++) {
                 Card card = tableauPile.getCards().get(j);
 
-                // Create the card view
-                ImageView cardView = createCardView(card, isLarge);
+                // Create the card view (pass all three parameters: card, tableauPile, and isLarge)
+                ImageView cardView = createCardView(card, tableauPile, isLarge);
 
                 // Create layout parameters for the card, ensuring proper stacking (overlap)
                 FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
@@ -409,7 +409,58 @@ public class SolitaireFragment extends Fragment {
             }
 
             // Add drag listeners for moving cards to foundation
-            addFoundationPileDragListeners(foundationPileView, foundationPile);
+            foundationPileView.setOnDragListener(new View.OnDragListener() {
+                @Override
+                public boolean onDrag(View v, DragEvent event) {
+                    switch (event.getAction()) {
+                        case DragEvent.ACTION_DRAG_STARTED:
+                            Log.d("SolitaireFragment", "Drag started on foundation pile.");
+                            return true;
+
+                        case DragEvent.ACTION_DRAG_ENTERED:
+                            Log.d("SolitaireFragment", "Drag entered foundation pile.");
+                            return true;
+
+                        case DragEvent.ACTION_DRAG_EXITED:
+                            Log.d("SolitaireFragment", "Drag exited foundation pile.");
+                            return true;
+
+                        case DragEvent.ACTION_DROP:
+                            Log.d("SolitaireFragment", "Drop event on foundation pile.");
+                            Object draggedObject = event.getLocalState();
+
+                            if (draggedObject instanceof Card) {
+                                Card draggedCard = (Card) draggedObject;
+                                Log.d("SolitaireFragment", "Attempting to drop " + draggedCard.getValue() + " on foundation pile.");
+
+                                // Check if the card can be added to the foundation pile
+                                if (foundationPile.canAddCard(draggedCard)) {
+                                    // Get the source pile of the card
+                                    Pile sourcePile = getSourcePileForCard(draggedCard);
+
+                                    if (sourcePile != null) {
+                                        foundationPile.addCard(sourcePile.removeCard());
+                                        Log.d("SolitaireFragment", "Moved " + draggedCard.getValue() + " to foundation pile.");
+
+                                        // Update the UI after moving the card
+                                        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                                        return true;
+                                    }
+                                } else {
+                                    Log.d("SolitaireFragment", "Cannot move " + draggedCard.getValue() + " to foundation pile.");
+                                }
+                            }
+                            return false;
+
+                        case DragEvent.ACTION_DRAG_ENDED:
+                            Log.d("SolitaireFragment", "Drag ended on foundation pile.");
+                            return true;
+
+                        default:
+                            return false;
+                    }
+                }
+            });
 
             // Set layout params for foundation piles
             int scaledWidth = getScaledWidth();
@@ -430,6 +481,7 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
+
     public boolean canMoveToTableauPile(Card card, TableauPile tableauPile) {
         // Check if the tableau pile can accept the card
         Log.d("SolitaireFragment", "Attempting to move card: " + card.getValue() + " to tableau pile.");
@@ -442,7 +494,7 @@ public class SolitaireFragment extends Fragment {
     }
 
     public boolean moveCardToTableau(TableauPile targetPile, Pile sourcePile) {
-        // Check if source pile has any cards
+        // Check if the source pile has any cards
         if (sourcePile.isEmpty()) {
             Log.d("SolitaireFragment", "Source pile is empty after moving card.");
             return false;
@@ -455,6 +507,16 @@ public class SolitaireFragment extends Fragment {
         if (targetPile.canAddCard(cardToMove)) {
             // Remove the card from the source pile and add it to the target pile
             targetPile.addCard(sourcePile.removeCard());
+
+            // If the source pile (likely a tableau pile) still has cards, flip the next one
+            if (!sourcePile.isEmpty()) {
+                Card topCard = sourcePile.peekTopCard();
+                if (!topCard.isFaceUp()) {
+                    topCard.flip(); // Flip the card to face-up
+                    Log.d("SolitaireFragment", "Flipped the top card of the source pile.");
+                }
+            }
+
             Log.d("SolitaireFragment", "Card moved. Source pile empty? " + sourcePile.isEmpty());
             return true;
         }
@@ -504,10 +566,9 @@ public class SolitaireFragment extends Fragment {
         return false; // Move is invalid
     }
 
-    private ImageView createCardView(Card card, Boolean isLarge) {
+    private ImageView createCardView(Card card, TableauPile tableauPile, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
 
-        // Set the card image (face-up or face-down)
         if (card.isFaceUp()) {
             int resId = getCardDrawableResource(card, isLarge);
             cardView.setImageResource(resId);
@@ -515,16 +576,23 @@ public class SolitaireFragment extends Fragment {
             cardView.setImageResource(R.drawable.cardsback);
         }
 
-        // Set OnTouchListener to start drag event when card is touched
         cardView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    Log.d("SolitaireFragment", "Card touched: " + card.getValue() + " of " + card.getSuit());
-
-                    // Create drag shadow and initiate drag event
+                    List<Card> faceUpCards = tableauPile.getFaceUpCardsFrom(card);
                     View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
-                    view.startDrag(null, shadowBuilder, card, 0);
+
+                    Log.d("SolitaireFragment", "Card touch event: " + card.getValue() + " of " + card.getSuit());
+
+                    if (faceUpCards.size() == 1) {
+                        view.startDragAndDrop(null, shadowBuilder, card, 0);
+                        Log.d("SolitaireFragment", "Dragging single card: " + card.getValue() + " of " + card.getSuit());
+                    } else {
+                        ArrayList<Card> draggedCards = new ArrayList<>(faceUpCards);
+                        view.startDragAndDrop(null, shadowBuilder, draggedCards, 0);
+                        Log.d("SolitaireFragment", "Dragging group of cards from " + card.getValue());
+                    }
                     return true;
                 }
                 return false;
@@ -569,63 +637,122 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void addTableauPileDragListeners(FrameLayout tableauLayout, TableauPile tableauPile) {
-        tableauLayout.setOnDragListener((v, event) -> {
-            switch (event.getAction()) {
-                case DragEvent.ACTION_DRAG_STARTED:
-                    return true;
-
-                case DragEvent.ACTION_DROP:
-                    Card draggedCard = (Card) event.getLocalState();
-
-                    // If tableau pile is empty, only allow a King to be dropped
-                    if (tableauPile.isEmpty()) {
-                        if ("King".equals(draggedCard.getValue())) {
-                            moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
-                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
-                            return true;
-                        } else {
-                            return false; // Only Kings can be placed in an empty tableau pile
-                        }
-                    }
-
-                    // If tableau pile is not empty, follow normal tableau rules
-                    if (canMoveToTableauPile(draggedCard, tableauPile)) {
-                        moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
-                        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+        tableauLayout.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DRAG_STARTED:
+                        Log.d("SolitaireFragment", "Drag started on tableau pile.");
                         return true;
-                    }
 
-                    return false;
+                    case DragEvent.ACTION_DRAG_ENTERED:
+                        Log.d("SolitaireFragment", "Drag entered on tableau pile.");
+                        return true;
 
-                default:
-                    return false;
+                    case DragEvent.ACTION_DRAG_EXITED:
+                        Log.d("SolitaireFragment", "Drag exited from tableau pile.");
+                        return true;
+
+                    case DragEvent.ACTION_DRAG_ENDED:
+                        Log.d("SolitaireFragment", "Drag ended on tableau pile.");
+                        return true;
+
+                    case DragEvent.ACTION_DROP:
+                        Log.d("SolitaireFragment", "Drag drop on tableau pile.");
+
+                        // Get the dragged object from the event
+                        Object draggedObject = event.getLocalState();
+                        Log.d("SolitaireFragment", "Dragged object detected.");
+
+                        // Handle single card drop
+                        if (draggedObject instanceof Card) {
+                            Card draggedCard = (Card) draggedObject;
+                            Log.d("SolitaireFragment", "Attempting to drop single card: " + draggedCard.getValue() + " of " + draggedCard.getSuit());
+
+                            // Log the top card of the tableau pile
+                            if (!tableauPile.isEmpty()) {
+                                Card topCard = tableauPile.peekTopCard();
+                                Log.d("SolitaireFragment", "Top card of tableau pile: " + topCard.getValue() + " of " + topCard.getSuit());
+                            } else {
+                                Log.d("SolitaireFragment", "Tableau pile is empty.");
+                            }
+
+                            // Check if the card can be added to this tableau pile
+                            if (tableauPile.canAddCard(draggedCard)) {
+                                Log.d("SolitaireFragment", "Valid move, adding card to tableau pile.");
+
+                                // Get source pile and remove card from it
+                                Pile sourcePile = getSourcePileForCard(draggedCard);
+                                if (sourcePile != null) {
+                                    tableauPile.addCard(sourcePile.removeCard());
+                                    Log.d("SolitaireFragment", "Card added to tableau pile: " + draggedCard.getValue());
+
+                                    // Re-render the board after moving card
+                                    renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                                } else {
+                                    Log.d("SolitaireFragment", "Source pile is null, unable to move card.");
+                                }
+                                return true;
+                            } else {
+                                Log.d("SolitaireFragment", "Invalid move, cannot add card to tableau pile.");
+                                return false;
+                            }
+                        } else {
+                            Log.d("SolitaireFragment", "Dragged object is not a card.");
+                        }
+                        return false;
+
+                    default:
+                        return false;
+                }
             }
         });
     }
 
     private void addFoundationPileDragListeners(ImageView foundationPileView, FoundationPile foundationPile) {
-        foundationPileView.setOnDragListener((v, event) -> {
-            switch (event.getAction()) {
-                case DragEvent.ACTION_DRAG_STARTED:
-                    Log.d("SolitaireFragment", "Drag started on foundation pile.");
-                    return true;
+        foundationPileView.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DROP:
+                        // Get the dragged object from the event
+                        Object draggedObject = event.getLocalState();
 
-                case DragEvent.ACTION_DROP:
-                    Card draggedCard = (Card) event.getLocalState();
-                    Log.d("SolitaireFragment", "Trying to drop " + draggedCard.getValue() + " of " + draggedCard.getSuit() + " on foundation pile.");
+                        // Case 1: The dragged object is a single card (such as Ace)
+                        if (draggedObject instanceof Card) {
+                            Card draggedCard = (Card) draggedObject;
+                            Log.d("SolitaireFragment", "Attempting to move card: " + draggedCard.getValue() + " of " + draggedCard.getSuit() + " to foundation pile.");
 
-                    if (canMoveToFoundationPile(draggedCard, foundationPile)) {
-                        boolean moved = moveCardToFoundation(foundationPile, getSourcePileForCard(draggedCard));
-                        Log.d("SolitaireFragment", "Move to foundation " + (moved ? "succeeded" : "failed"));
-                        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
-                        return moved;
-                    } else {
-                        Log.d("SolitaireFragment", "Move failed: card cannot be placed on foundation.");
-                    }
-                    return false;
+                            // Check if the card can be added to the foundation pile
+                            if (foundationPile.canAddCard(draggedCard)) {
+                                // Get the source pile of the card
+                                Pile sourcePile = getSourcePileForCard(draggedCard);
 
-                default:
-                    return false;
+                                if (sourcePile != null) {
+                                    foundationPile.addCard(sourcePile.removeCard());
+                                    Log.d("SolitaireFragment", "Moved " + draggedCard.getValue() + " to foundation pile.");
+
+                                    // Update the UI after moving the card
+                                    renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                                    return true;
+                                }
+                            } else {
+                                Log.d("SolitaireFragment", "Cannot move " + draggedCard.getValue() + " to foundation pile.");
+                            }
+                            return false;
+
+                            // Case 2: The dragged object is a list of cards (though only single cards should go to foundation)
+                        } else if (draggedObject instanceof ArrayList) {
+                            // Normally, you don't drag multiple cards to foundation piles, so we block this case.
+                            Log.d("SolitaireFragment", "Foundation piles do not accept multiple cards.");
+                            return false;
+                        }
+
+                        return false;
+
+                    default:
+                        return false;
+                }
             }
         });
     }
