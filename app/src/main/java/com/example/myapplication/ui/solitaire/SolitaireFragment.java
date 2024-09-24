@@ -132,41 +132,51 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void renderBoard(GridLayout solitaireBoard, Boolean isLarge) {
-        // Clear the board before rendering
+        // Clear the solitaire board to avoid duplicating views
         solitaireBoard.removeAllViews();
 
-        // Access MainActivity and the TextToSpeech instance
+        // Access MainActivity and TextTo-Speech instance
         MainActivity mainActivity = (MainActivity) getActivity();
         TextToSpeech tts = mainActivity.getTextToSpeech();
-
-        // Observe the TTS enabled state
         boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
 
-        // Set card overlap value and margins
-        int verticalOverlap = 50; // Adjust for card overlap
-        int verticalOffset = getScaledHeight() - 200; // Adjust positioning
+        // Add the stock pile (column 0, row 0)
+        addStockPile(solitaireBoard, isLarge);
+
+        // Add the waste pile (column 1, row 0)
+        addWastePile(solitaireBoard, isLarge);
+
+        // Add the foundation piles (columns 3-6, row 0)
+        addFoundationPiles(solitaireBoard, isLarge);
+
+        // Set vertical offset to move tableau piles below stock/waste/foundation piles
+        int verticalOffset = getScaledHeight() - 200; // Adjust as needed
+
+        // Get total screen width to distribute columns evenly
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
         int tableauColumnWidth = screenWidth / 7; // Divide width into 7 columns
-
-        // Render piles
-        addStockPile(solitaireBoard, isLarge);
-        addWastePile(solitaireBoard, isLarge);
-        addFoundationPiles(solitaireBoard, isLarge);
 
         // Render tableau piles
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
-            FrameLayout tableauLayout = createTableauLayout(i, tableauColumnWidth, verticalOffset);
+            FrameLayout tableauLayout = new FrameLayout(getContext());
+
+            GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+            layoutParams.columnSpec = GridLayout.spec(i);
+            layoutParams.rowSpec = GridLayout.spec(1);
+            layoutParams.width = tableauColumnWidth;
+            layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            layoutParams.topMargin = verticalOffset;
+
+            tableauLayout.setLayoutParams(layoutParams);
+
+            // Add cards to the tableau
             addCardsToTableau(tableauLayout, tableauPile, isLarge, isTtsEnabled, tts);
 
-            // Add drag listeners for moving cards to tableau
+            // Call `addTableauPileDragListeners` here
             addTableauPileDragListeners(tableauLayout, tableauPile);
 
             solitaireBoard.addView(tableauLayout);
-        }
-
-        for (TableauPile tableauPile : tableauPiles) {
-            Log.d("SolitaireFragment", "Tableau pile size after render: " + tableauPile.getCards().size());
         }
     }
 
@@ -175,32 +185,65 @@ public class SolitaireFragment extends Fragment {
         GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
 
         layoutParams.columnSpec = GridLayout.spec(columnIndex); // Column 0-6
-        layoutParams.rowSpec = GridLayout.spec(1); // Row 1
-        layoutParams.width = tableauColumnWidth; // Equal width for each column
-        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
-        layoutParams.topMargin = verticalOffset;
+        layoutParams.rowSpec = GridLayout.spec(1); // Row 1 (for tableau)
+        layoutParams.width = getScaledWidth(); // Keep consistent with foundation pile size
+        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT; // Allow height to adjust based on content
+        layoutParams.topMargin = verticalOffset; // Adjust for card overlap
+        layoutParams.leftMargin = 0; // No left margin to prevent shifting
 
         tableauLayout.setLayoutParams(layoutParams);
+
+        // Set the same background as foundation piles for consistency
+        tableauLayout.setBackgroundResource(R.drawable.backgroundtransparent);
+
         return tableauLayout;
     }
 
     private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPile, Boolean isLarge, boolean isTtsEnabled, TextToSpeech tts) {
-        for (int j = 0; j < tableauPile.getCards().size(); j++) {
-            Card card = tableauPile.getCards().get(j);
+        // Clear existing views in the layout to avoid overlaps or duplication
+        tableauLayout.removeAllViews();
 
-            // Create ImageView for the card
-            ImageView cardView = createCardView(card, isLarge);
-            FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(getScaledWidth(), getScaledHeight());
-            cardParams.topMargin = j * 35; // Adjust card overlap
+        // Size calculations: ensure the background and cards have consistent sizes
+        int scaledWidth = getScaledWidth(); // Same width as foundation piles
+        int scaledHeight = getScaledHeight(); // Same height as foundation piles
 
-            cardView.setLayoutParams(cardParams);
+        // Case 1: The tableau pile is empty
+        if (tableauPile.isEmpty()) {
+            // Create and configure the background for an empty tableau pile
+            ImageView emptyPileBackground = new ImageView(getContext());
+            emptyPileBackground.setImageResource(R.drawable.backgroundtransparent); // Use correct background resource
 
-            // Set up card click for TTS (if enabled and card is face-up)
-            if (card.isFaceUp() && isTtsEnabled) {
-                cardView.setOnClickListener(v -> tts.speak(card.getValue() + " of " + card.getSuit(), TextToSpeech.QUEUE_FLUSH, null, null));
+            // Set layout parameters for positioning at the top of the tableau pile
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
+            layoutParams.topMargin = 0; // Ensure it stays at the top
+            emptyPileBackground.setLayoutParams(layoutParams);
+
+            // Add the background to the tableau layout
+            tableauLayout.addView(emptyPileBackground);
+
+        } else {
+            // Case 2: The tableau pile has cards, so render them
+
+            // Loop through each card in the pile and add it to the layout
+            for (int j = 0; j < tableauPile.getCards().size(); j++) {
+                Card card = tableauPile.getCards().get(j);
+
+                // Create the card view
+                ImageView cardView = createCardView(card, isLarge);
+
+                // Create layout parameters for the card, ensuring proper stacking (overlap)
+                FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
+                cardParams.topMargin = j * 35; // Adjust to stack cards downward with overlap
+                cardView.setLayoutParams(cardParams);
+
+                // Set up Text-to-Speech (TTS) click listener if the card is face-up and TTS is enabled
+                if (card.isFaceUp() && isTtsEnabled) {
+                    cardView.setOnClickListener(v -> tts.speak(card.getValue() + " of " + card.getSuit(), TextToSpeech.QUEUE_FLUSH, null, null));
+                }
+
+                // Add the card view to the tableau layout
+                tableauLayout.addView(cardView);
             }
-
-            tableauLayout.addView(cardView);
         }
     }
 
@@ -533,23 +576,25 @@ public class SolitaireFragment extends Fragment {
 
                 case DragEvent.ACTION_DROP:
                     Card draggedCard = (Card) event.getLocalState();
-                    Log.d("SolitaireFragment", "Drag event action: " + event.getAction());
-                    Log.d("SolitaireFragment", "Dragging to tableau pile with size: " + tableauPile.getCards().size());
-                    Log.d("SolitaireFragment", "ACTION_DROP triggered on tableau pile with size: " + tableauPile.getCards().size());
 
-
-                    if (tableauPile != null) {
-                        Log.d("SolitaireFragment", "Target is a TableauPile.");
-                    } else {
-                        Log.d("SolitaireFragment", "Target is NOT a TableauPile.");
+                    // If tableau pile is empty, only allow a King to be dropped
+                    if (tableauPile.isEmpty()) {
+                        if ("King".equals(draggedCard.getValue())) {
+                            moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
+                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                            return true;
+                        } else {
+                            return false; // Only Kings can be placed in an empty tableau pile
+                        }
                     }
 
-                    // Check if the move is valid
+                    // If tableau pile is not empty, follow normal tableau rules
                     if (canMoveToTableauPile(draggedCard, tableauPile)) {
                         moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
                         renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
                         return true;
                     }
+
                     return false;
 
                 default:
