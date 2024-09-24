@@ -28,4 +28,8 @@ public class Pile {
     public Stack<Card> getCards() {
         return cards;
     }
+
+    public boolean containsCard(Card card) {
+        return cards.contains(card);
+    }
 }
