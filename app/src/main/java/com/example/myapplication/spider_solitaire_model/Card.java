@@ -7,58 +7,88 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Card {
-    public enum Suits{
+    public enum Suits {
         Spades;
     }
 
-    public enum Ranks{
-        aaceofspades, a2ofspades, a3ofspades, a4ofspades, a5ofspades, a6ofspades, a7ofspades
-        , aeightofspades, a9ofspades, a10ofspades, ajackofspades, aqueenofspades, akingofspades;
+    public enum Ranks {
+        ACE("aaceofspades"),
+        TWO("a2ofspades"),
+        THREE("a3ofspades"),
+        FOUR("a4ofspades"),
+        FIVE("a5ofspades"),
+        SIX("a6ofspades"),
+        SEVEN("a7ofspades"),
+        EIGHT("a8ofspades"),
+        NINE("a9ofspades"),
+        TEN("a10ofspades"),
+        JACK("ajackofspades"),
+        QUEEN("aqueenofspades"),
+        KING("akingofspades");
+
+        private final String identifier;
+
+        Ranks(String identifier) {
+            this.identifier = identifier;
+        }
+
+        public String getIdentifier() {
+            return identifier;
+        }
     }
 
     private final Suits suit;
     private final Ranks rank;
-    private boolean IsFaceUp;
+    private boolean isFaceUp;
 
     // Static map of drawable resources
     private static final Map<String, Integer> cardImageMap = new HashMap<>();
 
-    //Luis, the card names changed. I had to do this to implement the large cards. I changed the face cards and aces names in your code
-    //to match what I added. I changed some of your code below to fix it, but if this messes with any other code, I am not aware. Just an FYI.
     static {
-        // Initialize the map with card images
-        cardImageMap.put("a2ofspades", R.drawable.a2ofspades);
-        cardImageMap.put("a3ofspades", R.drawable.a3ofspades);
-        cardImageMap.put("a4ofspades", R.drawable.a4ofspades);
-        cardImageMap.put("a5ofspades", R.drawable.a5ofspades);
-        cardImageMap.put("a6ofspades", R.drawable.a6ofspades);
-        cardImageMap.put("a7ofspades", R.drawable.a7ofspades);
-        cardImageMap.put("a8ofspades", R.drawable.a8ofspades);
-        cardImageMap.put("a9ofspades", R.drawable.a9ofspades);
-        cardImageMap.put("a10ofspades", R.drawable.a10ofspades);
-        cardImageMap.put("ajackofspades", R.drawable.ajackofspades);
-        cardImageMap.put("aqueenofspades", R.drawable.aqueenofspades);
-        cardImageMap.put("akingofspades", R.drawable.akingofspades);
-        cardImageMap.put("aaceofspades", R.drawable.aaceofspades);
+
+        cardImageMap.put(Ranks.ACE.getIdentifier(), R.drawable.aaceofspades);
+        cardImageMap.put(Ranks.TWO.getIdentifier(), R.drawable.a2ofspades);
+        cardImageMap.put(Ranks.THREE.getIdentifier(), R.drawable.a3ofspades);
+        cardImageMap.put(Ranks.FOUR.getIdentifier(), R.drawable.a4ofspades);
+        cardImageMap.put(Ranks.FIVE.getIdentifier(), R.drawable.a5ofspades);
+        cardImageMap.put(Ranks.SIX.getIdentifier(), R.drawable.a6ofspades);
+        cardImageMap.put(Ranks.SEVEN.getIdentifier(), R.drawable.a7ofspades);
+        cardImageMap.put(Ranks.EIGHT.getIdentifier(), R.drawable.a8ofspades);
+        cardImageMap.put(Ranks.NINE.getIdentifier(), R.drawable.a9ofspades);
+        cardImageMap.put(Ranks.TEN.getIdentifier(), R.drawable.a10ofspades);
+        cardImageMap.put(Ranks.JACK.getIdentifier(), R.drawable.ajackofspades);
+        cardImageMap.put(Ranks.QUEEN.getIdentifier(), R.drawable.aqueenofspades);
+        cardImageMap.put(Ranks.KING.getIdentifier(), R.drawable.akingofspades);
     }
 
     public Card(Suits suit, Ranks rank) {
         this.suit = suit;
         this.rank = rank;
-        IsFaceUp = false;
+        this.isFaceUp = false;
     }
 
     public Suits getSuit() {
         return suit;
     }
+
     public Ranks getRank() {
         return rank;
     }
-    public boolean isFaceUp() {
-        return IsFaceUp;
+
+    public void toggleFaceUp() {
+        isFaceUp = !isFaceUp;
     }
+
+    public boolean isFaceUp() {
+        return isFaceUp;
+    }
+
+    public static Map<String, Integer> getCardImageMap() {
+        return cardImageMap;
+    }
+
     public void setFaceUp(boolean faceUp) {
-        IsFaceUp = true;
+        isFaceUp = faceUp; // Set face-up state properly
     }
 
     public static int getCardImageResource(Card card) {
@@ -67,12 +97,10 @@ public class Card {
             return R.drawable.spiderback; // Return default image if map is null
         }
 
-        String key = card.getRank().name().toLowerCase(); // The rank already includes the suit
-
+        String key = card.getRank().getIdentifier();
         Log.d("CardImage", "Looking for card image with key: " + key);
 
         // Return the card image from the map, or a default image if the key is not found
         return cardImageMap.getOrDefault(key, R.drawable.spiderback);
     }
-
 }

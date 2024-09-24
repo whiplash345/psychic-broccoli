@@ -1,124 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" xmlns:app="http://schemas.android.com/apk/res-auto"
         tools:context="com.example.myapplication.ui.spider.SpiderSolitaireFragment">
 
-    <!-- Game board background -->
-    <FrameLayout
-            android:id="@+id/gameBoard"
-            android:orientation="horizontal"
+    <!-- Main Screen with green background -->
+    <LinearLayout
+            android:id="@+id/mainScreen"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/casino_green">
+            android:orientation="vertical"
+            android:background="@color/casino_green"
+            android:gravity="center">
 
-        <!-- Button to start the game -->
-        <Button
-                android:id="@+id/play"
-                android:text="Play"
-                android:textSize="25sp"
-                android:layout_width="200dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginVertical="560dp"
-                android:backgroundTint="@color/design_default_color_secondary_variant"/>
-
-        <!-- Placeholder for each pile with proper constraints -->
-        <LinearLayout
-                android:id="@+id/pile1"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="40dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile2"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="130dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile3"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="220dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile4"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="310dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile5"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="410dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile6"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="500dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile7"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="590dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile8"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="680dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile9"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="770dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
-
-        <LinearLayout
-                android:id="@+id/pile10"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="860dp"
-                android:layout_marginVertical="200dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"/>
+        <!-- Main Image -->
         <ImageView
-                android:id="@+id/imageView2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="25dp"
-                android:layout_gravity="center_horizontal"
                 android:src="@drawable/spider_solitaire_inpixio"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/mainImage"/>
 
 
-    </FrameLayout>
+        <!-- Play Button -->
+        <Button
+                android:id="@+id/playButton"
+                android:layout_width="200dp"
+                android:layout_height="80dp"
+                android:text="Play"
+                android:backgroundTint="@color/cardview_shadow_start_color"
+                android:textSize="40sp"
+                android:gravity="center_horizontal"/>
 
+    </LinearLayout>
+
+    <!-- Game board (Initially hidden, will become visible on Play button click) -->
+    <RelativeLayout
+            android:id="@+id/gameBoard"
+            android:background="@color/casino_green"
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:layout_height="match_parent">
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
