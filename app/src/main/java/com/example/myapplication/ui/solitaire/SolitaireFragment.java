@@ -438,12 +438,18 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
     }
 
     public boolean canMoveToFoundationPile(Card card, FoundationPile foundationPile) {
-        // Check if the foundation pile can accept the card
-        return foundationPile.canAddCard(card);
+        // If the foundation pile is empty, only allow Aces
+        if (foundationPile.isEmpty()) {
+            return "Ace".equals(card.getValue());
+        } else {
+            // If the pile is not empty, check if the card can be added in ascending order and same suit
+            Card topCard = foundationPile.peekTopCard();
+            return card.isOneRankHigher(topCard) && card.getSuit().equals(topCard.getSuit());
+        }
     }
 
-    public boolean moveCardToTableau(TableauPile targetPile, Pile sourcePile) {
-        // Check if source pile has any cards
+    private boolean moveCardToTableau(TableauPile targetPile, Pile sourcePile) {
+        // Check if the source pile has any cards
         if (sourcePile.isEmpty()) {
             Log.d("SolitaireFragment", "Source pile is empty after moving card.");
             return false;
@@ -459,13 +465,18 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
             targetPile.addCard(sourcePile.removeCard());
             Log.d("SolitaireFragment", "Card " + cardToMove.getValue() + " moved to tableau pile.");
 
-            // Check if there are cards remaining in the source pile
+            // Check if the card that was just moved is already face-up
+            if (!cardToMove.isFaceUp()) {
+                cardToMove.flip();  // Flip to face-up if it was face-down
+                Log.d("SolitaireFragment", "Flipped card to face-up: " + cardToMove.getValue() + " of " + cardToMove.getSuit());
+            }
+
+            // After moving, check if the next top card in the source pile needs to be flipped
             if (!sourcePile.isEmpty()) {
                 Card topCard = sourcePile.peekTopCard();
                 if (!topCard.isFaceUp()) {
-                    // Flip the top card to face up
-                    topCard.flip();
-                    Log.d("SolitaireFragment", "Flipped top card of source pile: " + topCard.getValue() + " of " + topCard.getSuit());
+                    topCard.flip();  // Flip the newly revealed top card of the source pile to face-up
+                    Log.d("SolitaireFragment", "Flipped new top card of source pile: " + topCard.getValue() + " of " + topCard.getSuit());
                 }
             }
 
@@ -474,11 +485,11 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
             return true;
         }
 
-        return false; // Move is invalid
+        return false;  // Move is invalid
     }
 
     public boolean moveCardToFoundation(FoundationPile targetPile, Pile sourcePile) {
-        // Check if source pile has any cards
+        // Check if the source pile has any cards
         if (sourcePile.isEmpty()) {
             return false;
         }
@@ -491,24 +502,24 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
         if (canMoveToFoundationPile(cardToMove, targetPile)) {
             // Move the card from the source pile to the foundation
             targetPile.addCard(sourcePile.removeCard());
-            Log.d("SolitaireFragment", "Moved " + cardToMove.getValue() + " to foundation pile of " + cardToMove.getSuit());
+            Log.d("SolitaireFragment", "Moved " + cardToMove.getValue() + " to foundation pile.");
 
-            // Check if there are cards remaining in the source pile
+            // If there are more cards in the source pile, flip the next card if needed
             if (!sourcePile.isEmpty()) {
                 Card topCard = sourcePile.peekTopCard();
                 if (!topCard.isFaceUp()) {
-                    // Flip the top card to face up
                     topCard.flip();
                     Log.d("SolitaireFragment", "Flipped top card of source pile: " + topCard.getValue() + " of " + topCard.getSuit());
                 }
             }
 
-            // Re-render the board to reflect changes
+            // Re-render the board to reflect the changes
             renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
             return true;
         }
 
-        return false; // Move is invalid
+        Log.d("SolitaireFragment", "Move to foundation failed. Cannot place " + cardToMove.getValue() + " on foundation pile.");
+        return false;
     }
 /*
     public boolean moveCardFromWaste(Pile wastePile, TableauPile tableauPile) {
@@ -550,14 +561,19 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
                 if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
                     Log.d("SolitaireFragment", "Card touched: " + card.getValue() + " of " + card.getSuit());
 
-                    // Get the list of face-up cards starting from the touched card
-                    List<Card> faceUpCards = tableauPile.getFaceUpCardsFrom(card);
-
-                    // Create a drag shadow
-                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
-
-                    // Start dragging the group of face-up cards
-                    view.startDragAndDrop(null, shadowBuilder, faceUpCards, 0);
+                    // If the card is the only card being dragged, pass it as a Card
+                    if (tableauPile.getFaceUpCardsFrom(card).size() == 1) {
+                        // Single card drag
+                        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                        view.startDragAndDrop(null, shadowBuilder, card, 0);
+                        Log.d("SolitaireFragment", "Dragging single card: " + card.getValue() + " of " + card.getSuit());
+                    } else {
+                        // Group of cards drag
+                        List<Card> faceUpCards = tableauPile.getFaceUpCardsFrom(card);
+                        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                        view.startDragAndDrop(null, shadowBuilder, faceUpCards, 0);
+                        Log.d("SolitaireFragment", "Dragging group of cards from " + card.getValue());
+                    }
                     return true;
                 }
                 return false;
@@ -677,8 +693,11 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
     private void moveCardsToTableau(TableauPile targetPile, Pile sourcePile, List<Card> cardsToMove) {
         // Move each card to the target pile
         for (Card card : cardsToMove) {
+            Log.d("SolitaireFragment", "Moving card: " + card.getValue() + " of " + card.getSuit() + " Face up: " + card.isFaceUp());
+            // Only flip the card if it's face down; ensure we don't re-flip cards
             if (!card.isFaceUp()) {
-                card.flip();  // Ensure the card is face up when moved
+                card.flip();  // Flip to face up only if needed
+                Log.d("SolitaireFragment", "Flipping card: " + card.getValue() + " of " + card.getSuit());
             }
             targetPile.addCard(card);  // Add the card to the target pile
         }
@@ -693,6 +712,7 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
             Card newTopCard = sourcePile.peekTopCard();
             if (!newTopCard.isFaceUp()) {
                 newTopCard.flip();  // Flip the newly revealed top card of the source pile
+                Log.d("SolitaireFragment", "Flipped new top card: " + newTopCard.getValue() + " of " + newTopCard.getSuit());
             }
         }
     }
@@ -704,10 +724,19 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
                     Log.d("SolitaireFragment", "Drag started on foundation pile.");
                     return true;
 
+                case DragEvent.ACTION_DRAG_ENTERED:
+                    Log.d("SolitaireFragment", "Drag entered foundation pile.");
+                    return true;
+
+                case DragEvent.ACTION_DRAG_EXITED:
+                    Log.d("SolitaireFragment", "Drag exited foundation pile.");
+                    return true;
+
                 case DragEvent.ACTION_DROP:
+                    Log.d("SolitaireFragment", "Attempting to drop on foundation pile.");
                     Object draggedObject = event.getLocalState();
 
-                    // Check if the dragged object is a single card (expected for foundation piles)
+                    // Check if the dragged object is a single card
                     if (draggedObject instanceof Card) {
                         Card draggedCard = (Card) draggedObject;
                         Log.d("SolitaireFragment", "Trying to drop " + draggedCard.getValue() + " of " + draggedCard.getSuit() + " on foundation pile.");
@@ -733,6 +762,10 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
                     }
 
                     return false;
+
+                case DragEvent.ACTION_DRAG_ENDED:
+                    Log.d("SolitaireFragment", "Drag ended on foundation pile.");
+                    return true;
 
                 default:
                     return false;
