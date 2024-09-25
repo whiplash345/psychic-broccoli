@@ -158,7 +158,7 @@ public class SolitaireFragment extends Fragment {
         addFoundationPiles(solitaireBoard, isLarge);
 
         // Set vertical offset to move tableau piles below stock/waste/foundation piles
-        int verticalOffset = getScaledHeight() - 200; // Adjust as needed
+        int verticalOffset = getScaledHeight() - 250; // Adjust as needed
 
         // Get total screen width to distribute columns evenly
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
