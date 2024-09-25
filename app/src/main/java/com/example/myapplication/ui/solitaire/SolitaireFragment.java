@@ -72,11 +72,11 @@ public class SolitaireFragment extends Fragment {
     }
 
     private int getScaledWidth() {
-        return (int) (ORIGINAL_WIDTH * 1.15); // Adjust this value as needed
+        return (int) (ORIGINAL_WIDTH * 1.3); // Adjust this value as needed
     }
 
     private int getScaledHeight() {
-        return (int) (ORIGINAL_HEIGHT * 1.15); // Adjust this value as needed
+        return (int) (ORIGINAL_HEIGHT * 1.3); // Adjust this value as needed
     }
 
     private void initializeGameBoard(View root) {
