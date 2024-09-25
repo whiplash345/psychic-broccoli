@@ -7,6 +7,7 @@ import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -542,12 +543,20 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
 
             // Re-render the board to reflect the changes
             renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+
+            // Check if the player has won the game
+            if (checkWinCondition()) {
+                // Congratulate the player on winning
+                congratulatePlayer();
+            }
+
             return true;
         }
 
         Log.d("SolitaireFragment", "Move to foundation failed. Cannot place " + cardToMove.getValue() + " on foundation pile.");
         return false;
     }
+
 /*
     public boolean moveCardFromWaste(Pile wastePile, TableauPile tableauPile) {
         // Check if waste pile has any cards
@@ -832,6 +841,42 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
         });
     }
 
+    private boolean checkWinCondition() {
+        // Check if all foundation piles are complete
+        for (FoundationPile foundationPile : foundationPiles) {
+            if (foundationPile.getCards().size() != 13) {
+                return false; // Not all foundation piles are complete
+            }
+        }
+
+        // Check if all tableau piles, stock, and waste piles are empty
+        for (TableauPile tableauPile : tableauPiles) {
+            if (!tableauPile.isEmpty()) {
+                return false; // A tableau pile is not empty
+            }
+        }
+
+        if (!stockPile.isEmpty() || !wastePile.isEmpty()) {
+            return false; // Either the stock or waste pile is not empty
+        }
+
+        // The player has won the game
+        return true;
+    }
+
+    private void congratulatePlayer() {
+        // Show a toast message
+        Toast.makeText(getContext(), "Congratulations! You've won the game!", Toast.LENGTH_LONG).show();
+
+        // Use Text-to-Speech (TTS) if enabled
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
+        MainActivity mainActivity = (MainActivity) getActivity();
+        TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        if (isTtsEnabled && tts != null) {
+            tts.speak("Congratulations! You've won the game!", TextToSpeech.QUEUE_FLUSH, null, null);
+        }
+    }
 
     private int getCardDrawableResource(Card card, Boolean isLarge) {
         String value = card.getValue();
