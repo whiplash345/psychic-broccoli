@@ -241,7 +241,7 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
 
             // Create layout parameters for the card, ensuring proper stacking (overlap)
             FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
-            cardParams.topMargin = j * 35; // Adjust to stack cards downward with overlap
+            cardParams.topMargin = j * 45; // Adjust to stack cards downward with overlap
             cardView.setLayoutParams(cardParams);
 
             // Set up Text-to-Speech (TTS) click listener if the card is face-up and TTS is enabled
