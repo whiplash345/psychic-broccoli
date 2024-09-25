@@ -138,6 +138,13 @@ public class SolitaireFragment extends Fragment {
         // Access MainActivity and TextTo-Speech instance
         MainActivity mainActivity = (MainActivity) getActivity();
         TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        if (tts == null) {
+            Log.e("SolitaireFragment", "TTS is null!");
+        } else {
+            Log.d("SolitaireFragment", "TTS retrieved successfully.");
+        }
+
         boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
 
         // Add the stock pile (column 0, row 0)
@@ -322,31 +329,47 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
             // Set the image for the top card
             wastePileView.setImageResource(getCardDrawableResource(topCard, isLarge));
 
-            // Set OnClickListener for TTS (only if the top card is face-up)
-            wastePileView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (topCard.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
-                        String cardName = topCard.getValue() + " of " + topCard.getSuit();
-                        Log.d("SolitaireFragment", "Speaking card: " + cardName); // Log the card to be spoken
-                        if (tts != null) {
-                            tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
-                        }
-                    }
-                }
-            });
-
-            // Set OnTouchListener to start drag event when card is touched
+            // Set OnTouchListener to handle both click and drag events
             wastePileView.setOnTouchListener(new View.OnTouchListener() {
+                private long touchStartTime;
+                private boolean isDragging = false;
+
                 @Override
                 public boolean onTouch(View view, MotionEvent motionEvent) {
-                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                        // Create a drag shadow and initiate drag event
-                        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(wastePileView);
-                        view.startDrag(null, shadowBuilder, wastePile.peek(), 0); // Pass the top card as localState
-                        return true;
+                    switch (motionEvent.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            touchStartTime = System.currentTimeMillis(); // Record touch start time
+                            isDragging = false; // Reset dragging flag
+                            return true;
+
+                        case MotionEvent.ACTION_UP:
+                            long touchDuration = System.currentTimeMillis() - touchStartTime;
+                            if (touchDuration < 200 && !isDragging) {
+                                // This is a click, not a drag
+                                if (topCard.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
+                                    String cardName = topCard.getValue() + " of " + topCard.getSuit();
+                                    Log.d("SolitaireFragment", "Speaking card: " + cardName);
+                                    if (tts != null) {
+                                        tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                                    }
+                                }
+                            }
+                            return true;
+
+                        case MotionEvent.ACTION_MOVE:
+                            long moveDuration = System.currentTimeMillis() - touchStartTime;
+                            if (moveDuration > 200) {
+                                // This is a drag event
+                                isDragging = true;
+                                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(wastePileView);
+                                view.startDragAndDrop(null, shadowBuilder, wastePile.peek(), 0); // Pass the top card as localState
+                                Log.d("SolitaireFragment", "Dragging top card from waste pile: " + topCard.getValue() + " of " + topCard.getSuit());
+                            }
+                            return true;
+
+                        default:
+                            return false;
                     }
-                    return false;
                 }
             });
 
@@ -375,6 +398,7 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
         // Add the waste pile view to the solitaire board
         solitaireBoard.addView(wastePileView);
     }
+
 
 
     private void addFoundationPiles(GridLayout solitaireBoard, Boolean isLarge) {
@@ -561,39 +585,51 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
         boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
         Log.d("SolitaireFragment", "isTtsEnabled: " + isTtsEnabled);
 
-        // Set OnClickListener for TTS
-        cardView.setOnClickListener(v -> {
-            if (card.isFaceUp() && isTtsEnabled) {
-                String cardName = card.getValue() + " of " + card.getSuit();
-                Log.d("SolitaireFragment", "Speaking card: " + cardName); // Log the card to be spoken
-                MainActivity mainActivity = (MainActivity) getActivity();
-                TextToSpeech tts = mainActivity.getTextToSpeech();
-                if (tts != null) {
-                    tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
-                }
-            }
-        });
-
-        // Set OnTouchListener to start drag event when card is touched
+        // Set OnTouchListener to differentiate between click and drag
         cardView.setOnTouchListener(new View.OnTouchListener() {
+            private long touchStartTime;
+
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                    Log.d("SolitaireFragment", "Card touched: " + card.getValue() + " of " + card.getSuit());
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        touchStartTime = System.currentTimeMillis(); // Record the time when touch starts
+                        return true;
 
-                    if (tableauPile.getFaceUpCardsFrom(card).size() == 1) {
-                        // Single card drag
-                        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
-                        view.startDragAndDrop(null, shadowBuilder, card, 0);
-                        Log.d("SolitaireFragment", "Dragging single card: " + card.getValue() + " of " + card.getSuit());
-                    } else {
-                        // Group of cards drag
-                        List<Card> faceUpCards = tableauPile.getFaceUpCardsFrom(card);
-                        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
-                        view.startDragAndDrop(null, shadowBuilder, faceUpCards, 0);
-                        Log.d("SolitaireFragment", "Dragging group of cards from " + card.getValue());
-                    }
-                    return true;
+                    case MotionEvent.ACTION_UP:
+                        long touchDuration = System.currentTimeMillis() - touchStartTime;
+                        if (touchDuration < 200) {
+                            // This is a click, not a drag
+                            if (card.isFaceUp() && isTtsEnabled) {
+                                String cardName = card.getValue() + " of " + card.getSuit();
+                                Log.d("SolitaireFragment", "Speaking card: " + cardName); // Log the card to be spoken
+                                MainActivity mainActivity = (MainActivity) getActivity();
+                                TextToSpeech tts = mainActivity.getTextToSpeech();
+                                if (tts != null) {
+                                    tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                                }
+                            }
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        long moveDuration = System.currentTimeMillis() - touchStartTime;
+                        if (moveDuration > 200) {
+                            // This is a drag event
+                            if (tableauPile.getFaceUpCardsFrom(card).size() == 1) {
+                                // Single card drag
+                                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                                view.startDragAndDrop(null, shadowBuilder, card, 0);
+                                Log.d("SolitaireFragment", "Dragging single card: " + card.getValue() + " of " + card.getSuit());
+                            } else {
+                                // Group of cards drag
+                                List<Card> faceUpCards = tableauPile.getFaceUpCardsFrom(card);
+                                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                                view.startDragAndDrop(null, shadowBuilder, faceUpCards, 0);
+                                Log.d("SolitaireFragment", "Dragging group of cards from " + card.getValue());
+                            }
+                        }
+                        return true;
                 }
                 return false;
             }
@@ -601,6 +637,8 @@ private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPil
 
         return cardView;
     }
+
+
 
 
 
