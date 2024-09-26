@@ -23,8 +23,9 @@ import java.util.Map;
 public class SpiderSolitaireFragment extends Fragment {
 
     private LinearLayout mainScreen;
-    private RelativeLayout gameBoard; // Ensure this is a RelativeLayout
+    private RelativeLayout gameBoard;
     private Button playButton;
+    private Button resetButton;  // Add a reference to the reset button
     private CardAdapter cardAdapter;
     private ArrayList<ArrayList<Card>> boardPiles;
     private ArrayList<Card> mainDeckPile;
@@ -43,45 +44,39 @@ public class SpiderSolitaireFragment extends Fragment {
 
         // Get references to the UI elements
         playButton = view.findViewById(R.id.playButton);
+        resetButton = view.findViewById(R.id.resetButton);  // Reference the reset button
         mainScreen = view.findViewById(R.id.mainScreen);
         gameBoard = view.findViewById(R.id.gameBoard);
 
-        // Initialize the card image map with card images
-        initializeCardImageMap();
-
         // Initialize card size and overlap settings
-        cardWidth = 200;  // Adjust to fit the layout
-        cardHeight = 260; // Adjust to fit the layout
-        cardOffset = 240; // Overlapping, adjust as necessary
+        cardWidth = 200;
+        cardHeight = 260;
+        cardOffset = 220;
 
         // Set OnClickListener for the Play button
         playButton.setOnClickListener(v -> {
-            // Hide main screen and show the game board
             mainScreen.setVisibility(View.GONE);
             gameBoard.setVisibility(View.VISIBLE);
             startGame();
+            resetButton.setVisibility(View.VISIBLE); // Show reset button after starting the game
         });
+
+        // Set OnClickListener for the Reset button
+        resetButton.setOnClickListener(v -> resetGame());  // Call resetGame() when clicked
 
         return view;
     }
 
-    private void initializeCardImageMap() {
-        // Populate cardImageMap with card image resources
-        // Example: cardImageMap.put("Ace of Spades", R.drawable.ace_of_spades);
-        // Add all necessary card images here.
-    }
-
     private void startGame() {
-        Deck deck = new Deck(); // Create a new deck of cards
+        Deck deck = new Deck();  // Create a new deck of cards
         boardPiles = new ArrayList<>();
         completedDeckPiles = new ArrayList<>();
-        mainDeckPile = new ArrayList<>(deck.getCards()); // Remaining cards for the main deck
+        mainDeckPile = new ArrayList<>(deck.getCards());  // Remaining cards for the main deck
 
         // Create piles from the deck
-        for (int i = 0; i < 10; i++) {  // 10 piles in Spider Solitaire
+        for (int i = 0; i < 10; i++) {
             ArrayList<Card> pile = new ArrayList<>();
             int cardsInPile = (i < 4) ? 6 : 5;  // First 4 piles get 6 cards, rest get 5 cards
-
             for (int j = 0; j < cardsInPile; j++) {
                 Card drawnCard = deck.drawCard();
                 if (drawnCard != null) {
@@ -91,12 +86,22 @@ public class SpiderSolitaireFragment extends Fragment {
             boardPiles.add(pile);
         }
 
-        // Initialize 4 empty completed deck piles
-        for (int i = 0; i < 4; i++) {
-            completedDeckPiles.add(new ArrayList<>()); // Empty pile
+        // Set the last card of each pile face-up
+        for (ArrayList<Card> pile : boardPiles) {
+            if (!pile.isEmpty()) {
+                for (int j = 0; j < pile.size() - 1; j++) {
+                    pile.get(j).setFaceUp(false);  // Face down all but the last card
+                }
+                pile.get(pile.size() - 1).setFaceUp(true);  // Set the last card face-up
+            }
         }
 
-        // Completed deck images
+        // Initialize empty completed deck piles
+        for (int i = 0; i < 4; i++) {
+            completedDeckPiles.add(new ArrayList<>());  // Empty pile
+        }
+
+        // Completed deck images (transparent backgrounds for now)
         int[] completedDeckImages = {
                 R.drawable.backgroundtransparent,
                 R.drawable.backgroundtransparent,
@@ -105,12 +110,20 @@ public class SpiderSolitaireFragment extends Fragment {
         };
 
         // Define the margin from the top of the screen for the piles
-        int pileTopMargin = 450;  // Example margin, adjust based on layout needs
+        int pileTopMargin = 450;
 
-        // Initialize the adapter with the piles, card image map, size, offset, and completed deck images
+        // Initialize the adapter and display piles on the gameBoard
         cardAdapter = new CardAdapter(boardPiles, cardImageMap, cardWidth, cardHeight, cardOffset, completedDeckImages, mainDeckPile, pileTopMargin, gameBoard);
+        cardAdapter.displayPiles(requireContext());
+    }
 
-        // Display the card piles on the gameBoard
-        cardAdapter.displayPiles(requireContext()); // Use requireContext() for a non-null context
+    private void resetGame() {
+        // Clear all piles and reinitialize
+        boardPiles.clear();
+        completedDeckPiles.clear();
+        mainDeckPile.clear();
+
+        // Restart the game with a fresh setup
+        startGame();
     }
 }

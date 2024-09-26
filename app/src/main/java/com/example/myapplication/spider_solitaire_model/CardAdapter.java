@@ -1,13 +1,25 @@
 package com.example.myapplication.spider_solitaire_model;
 
-import android.content.Context;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.*;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
 
 import java.util.ArrayList;
 import java.util.Map;
+
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class CardAdapter {
     private ArrayList<ArrayList<Card>> boardPiles;
@@ -36,7 +48,6 @@ public class CardAdapter {
         this.gameBoard = gameBoard; // Initialize gameBoard
     }
 
-    // Method to display piles on the given RelativeLayout
     public void displayPiles(Context context) {
         gameBoard.removeAllViews();  // Clear previous views
 
@@ -50,16 +61,15 @@ public class CardAdapter {
                 Card card = pile.get(j);
                 ImageView cardView = new ImageView(context);
 
-                // Set card face-up or face-down
-                if (j == pile.size() - 1) {
-                    card.setFaceUp(true);
-                    cardView.setImageResource(Card.getCardImageResource(card));
+                // Set card face-up or face-down based on its actual state
+                if (card.isFaceUp()) {
+                    cardView.setImageResource(Card.getCardImageResource(card));  // Show face-up card
                 } else {
                     cardView.setImageResource(R.drawable.spiderback);  // Face down for other cards
                 }
 
-                // Set OnClickListener for face-up cards
-                if (j == pile.size() - 1) {
+                // Set OnClickListener only for face-up cards
+                if (card.isFaceUp()) {
                     int finalI = i;
                     cardView.setOnClickListener(v -> handleCardClick(card, finalI)); // Pass the clicked card and its pile index
                 }
@@ -93,7 +103,7 @@ public class CardAdapter {
 
         // Display the main deck
         ImageView mainDeckView = new ImageView(context);
-        mainDeckView.setImageResource(R.drawable.spiderback);  // Show the back of the main deck
+        mainDeckView.setImageResource(R.drawable.spiderback);// Show the back of the main deck
         RelativeLayout.LayoutParams mainDeckParams = new RelativeLayout.LayoutParams(cardWidth, cardHeight);
         mainDeckParams.setMargins(2360, 150, 0, 0);
 
@@ -103,39 +113,79 @@ public class CardAdapter {
         gameBoard.addView(mainDeckView, mainDeckParams);
     }
 
-    // Handle the logic when a face-up card is clicked
+
     private void handleCardClick(Card clickedCard, int pileIndex) {
-        // Check if the clicked card can be moved to any other pile
+        ArrayList<Card> sourcePile = boardPiles.get(pileIndex);
+
+        // Get the index of the clicked card in the source pile
+        int clickedCardIndex = sourcePile.indexOf(clickedCard);
+
+        // If clicked card is face down or doesn't exist in the pile, exit early
+        if (clickedCardIndex == -1 || !clickedCard.isFaceUp()) {
+            return; // Invalid click
+        }
+
+        // Get all the face-up cards starting from the clicked card
+        ArrayList<Card> cardsToMove = new ArrayList<>(sourcePile.subList(clickedCardIndex, sourcePile.size()));
+
+        // Validate the sequence of cards in the stack
+        if (!isSequential(cardsToMove)) {
+            return; // The sequence is invalid, exit early
+        }
+
+        // Find a target pile where the cards can be moved
         for (int i = 0; i < boardPiles.size(); i++) {
-            if (i != pileIndex) { // Don't check the same pile
-                Card topCard = boardPiles.get(i).isEmpty() ? null : boardPiles.get(i).get(boardPiles.get(i).size() - 1);
-                if (topCard != null && clickedCard.getRank().ordinal() == topCard.getRank().ordinal() - 1) {
-                    // Move the clicked card to the target pile
-                    boardPiles.get(i).add(clickedCard); // Add to the target pile
-                    boardPiles.get(pileIndex).remove(clickedCard); // Remove from the original pile
+            if (i != pileIndex) { // Skip the same pile
+                ArrayList<Card> targetPile = boardPiles.get(i);
+                Card topCardInTargetPile = targetPile.isEmpty() ? null : targetPile.get(targetPile.size() - 1);
+
+                // Check if the top card in the target pile is one rank higher than the first card in cardsToMove
+                if (topCardInTargetPile == null || cardsToMove.get(0).getRank().ordinal() == topCardInTargetPile.getRank().ordinal() - 1) {
+                    // Valid move: Move the entire stack of cards
+                    targetPile.addAll(cardsToMove);  // Add the cards to the target pile
+                    sourcePile.subList(clickedCardIndex, sourcePile.size()).clear(); // Remove the cards from the source pile
+
+                    // After moving the cards, flip the new last card in the source pile if it exists
+                    if (!sourcePile.isEmpty()) {
+                        Card newLastCard = sourcePile.get(sourcePile.size() - 1);
+                        newLastCard.setFaceUp(true); // Flip the new last card face-up
+                    }
 
                     // Refresh the display to reflect the changes
-                    displayPiles(gameBoard.getContext()); // Update display using the context
-                    return;
+                    displayPiles(gameBoard.getContext());  // Re-draw piles with updated data
+                    return;  // Exit after a successful move
                 }
             }
         }
     }
 
-    // Deal from the main deck and ensure already face-up cards stay face up
+    // Method to check if the cards form a valid sequential order
+    private boolean isSequential(ArrayList<Card> cardsToMove) {
+        for (int i = 0; i < cardsToMove.size() - 1; i++) {
+            if (cardsToMove.get(i).getRank().ordinal() != cardsToMove.get(i + 1).getRank().ordinal() + 1) {
+                return false; // Invalid sequence
+            }
+        }
+        return true; // Valid sequence
+    }
+
+
+
     private void dealFromMainDeck() {
-        // Ensure there are cards in the main deck to deal
-        if (mainDeckPile.size() < 10) return; // Assuming 10 piles
+        // Ensure there are enough cards in the main deck to deal
+        if (mainDeckPile.size() < boardPiles.size()) return; // Ensure we can deal one card to each pile
 
         // Deal one card to each pile
         for (ArrayList<Card> pile : boardPiles) {
             if (!mainDeckPile.isEmpty()) {
                 Card newCard = mainDeckPile.remove(mainDeckPile.size() - 1); // Draw from the main deck
+                newCard.setFaceUp(true); // Ensure the newly dealt card is face-up
                 pile.add(newCard); // Add it to the pile
 
-                // Flip the card face up if it’s the last card in the pile
-                if (pile.size() == 1) {
-                    newCard.setFaceUp(true); // Flip the first card face up
+                // Check the previous last card in the pile to set it face down
+                if (pile.size() > 1) {
+                    Card previousLastCard = pile.get(pile.size() - 2); // The new last card will be the second last
+                    previousLastCard.setFaceUp(false); // Set the previous last card to face down
                 }
             }
         }
