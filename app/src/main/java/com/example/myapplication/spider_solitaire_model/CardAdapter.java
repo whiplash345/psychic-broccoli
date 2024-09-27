@@ -1,25 +1,15 @@
 package com.example.myapplication.spider_solitaire_model;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.*;
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 import com.example.myapplication.R;
 
 import java.util.ArrayList;
 import java.util.Map;
 
 import android.content.Context;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class CardAdapter {
     private ArrayList<ArrayList<Card>> boardPiles;
@@ -170,7 +160,6 @@ public class CardAdapter {
     }
 
 
-
     private void dealFromMainDeck() {
         // Ensure there are enough cards in the main deck to deal
         if (mainDeckPile.size() < boardPiles.size()) return; // Ensure we can deal one card to each pile
@@ -178,13 +167,20 @@ public class CardAdapter {
         // Deal one card to each pile
         for (ArrayList<Card> pile : boardPiles) {
             if (!mainDeckPile.isEmpty()) {
-                Card newCard = mainDeckPile.remove(mainDeckPile.size() - 1); // Draw from the main deck
-                newCard.setFaceUp(true); // Ensure the newly dealt card is face-up
+                // Get the index of the last card
+                int lastIndex = mainDeckPile.size() - 1;
+                // Retrieve the last card
+                Card newCard = mainDeckPile.get(lastIndex);
+                // Remove the last card using its index
+                mainDeckPile.remove(lastIndex);
+
+                // Ensure the newly dealt card is face-up
+                newCard.setFaceUp(true);
                 pile.add(newCard); // Add it to the pile
 
-                // Check the previous last card in the pile to set it face down
+                // Check the previous last card in the pile to set it face down if necessary
                 if (pile.size() > 1) {
-                    Card previousLastCard = pile.get(pile.size() - 2); // The new last card will be the second last
+                    Card previousLastCard = pile.get(pile.size() - 2); // Get the previous last card
                     previousLastCard.setFaceUp(false); // Set the previous last card to face down
                 }
             }

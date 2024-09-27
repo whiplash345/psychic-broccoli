@@ -40,12 +40,12 @@ public class Card {
     private final Suits suit;
     private final Ranks rank;
     private boolean isFaceUp;
+    private final int id;  // Unique identifier for each card instance
 
     // Static map of drawable resources
     private static final Map<String, Integer> cardImageMap = new HashMap<>();
 
     static {
-
         cardImageMap.put(Ranks.ACE.getIdentifier(), R.drawable.aaceofspades);
         cardImageMap.put(Ranks.TWO.getIdentifier(), R.drawable.a2ofspades);
         cardImageMap.put(Ranks.THREE.getIdentifier(), R.drawable.a3ofspades);
@@ -61,10 +61,11 @@ public class Card {
         cardImageMap.put(Ranks.KING.getIdentifier(), R.drawable.akingofspades);
     }
 
-    public Card(Suits suit, Ranks rank) {
+    public Card(Suits suit, Ranks rank, int id) {
         this.suit = suit;
         this.rank = rank;
         this.isFaceUp = false;
+        this.id = id;  // Assign unique ID
     }
 
     public Suits getSuit() {
@@ -83,12 +84,16 @@ public class Card {
         return isFaceUp;
     }
 
+    public int getId() {
+        return id; // Getter for unique ID
+    }
+
     public static Map<String, Integer> getCardImageMap() {
         return cardImageMap;
     }
 
     public void setFaceUp(boolean faceUp) {
-        isFaceUp = faceUp; // Set face-up state properly
+        isFaceUp = faceUp;
     }
 
     public static int getCardImageResource(Card card) {
@@ -104,3 +109,4 @@ public class Card {
         return cardImageMap.getOrDefault(key, R.drawable.spiderback);
     }
 }
+

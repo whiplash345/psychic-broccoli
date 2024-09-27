@@ -50,14 +50,14 @@
 
         <Button
                 android:id="@+id/resetButton"
+                android:text="Reset Game"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Reset Game"
-                android:textSize="24sp"
                 android:layout_margin="16dp"
-                android:visibility="visible"/>  <!-- Set to visible to ensure it's shown -->
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:visibility="visible"/> <!-- Ensure it's visible for testing -->
     </RelativeLayout>
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
+
 
