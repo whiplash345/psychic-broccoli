@@ -16,7 +16,6 @@ import com.example.myapplication.R;
 import com.example.myapplication.spider_solitaire_model.Card;
 import com.example.myapplication.spider_solitaire_model.CardAdapter;
 import com.example.myapplication.spider_solitaire_model.Deck;
-import com.example.myapplication.ui.spider.SpiderSolitaireViewModel;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -30,11 +29,11 @@ public class SpiderSolitaireFragment extends Fragment {
     private CardAdapter cardAdapter;
     private ArrayList<ArrayList<Card>> boardPiles;
     private ArrayList<Card> mainDeckPile;
-    private ArrayList<ArrayList<Card>> completedDeckPiles;
     private Map<String, Integer> cardImageMap;
+    private ArrayList<ArrayList<Card>> completedDeckPiles;
 
-    private SpiderSolitaireViewModel spiderSolitaireViewModel; // ViewModel for TTS state
-    private boolean isTtsEnabled = false; // Local variable to store TTS state
+    private SpiderSolitaireViewModel spiderSolitaireViewModel;
+    private boolean isTtsEnabled = false;
 
     private int cardWidth;
     private int cardHeight;
@@ -45,17 +44,6 @@ public class SpiderSolitaireFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_spider, container, false);
 
-        spiderSolitaireViewModel = new ViewModelProvider(requireActivity()).get(SpiderSolitaireViewModel.class);
-
-        spiderSolitaireViewModel.getIsLargeCard().observe(getViewLifecycleOwner(), isLarge -> {
-            if (cardAdapter != null) {
-                // Re-initialize the cardAdapter with the new card size
-                cardAdapter = new CardAdapter(boardPiles, cardImageMap, cardWidth, cardHeight, cardOffset,
-                        completedDeckImages, mainDeckPile, pileTopMargin, gameBoard, isLarge);
-                cardAdapter.displayPiles(getContext());
-            }
-        });
-
         playButton = view.findViewById(R.id.playButton);
         resetButton = view.findViewById(R.id.resetButton);
         mainScreen = view.findViewById(R.id.mainScreen);
@@ -65,19 +53,35 @@ public class SpiderSolitaireFragment extends Fragment {
         cardHeight = 260;
         cardOffset = 220;
 
-        // Initialize ViewModel and observe TTS state
+        // Initialize ViewModel and observe TTS state and game board state
         spiderSolitaireViewModel = new ViewModelProvider(requireActivity()).get(SpiderSolitaireViewModel.class);
-        spiderSolitaireViewModel.getIsTtsEnabled().observe(getViewLifecycleOwner(), new Observer<Boolean>() {
+        spiderSolitaireViewModel.getIsTtsEnabled().observe(getViewLifecycleOwner(), isEnabled -> isTtsEnabled = isEnabled);
+
+        spiderSolitaireViewModel.getBoardPilesLiveData().observe(getViewLifecycleOwner(), new Observer<ArrayList<ArrayList<Card>>>() {
             @Override
-            public void onChanged(Boolean isEnabled) {
-                isTtsEnabled = isEnabled; // Update the local TTS state
+            public void onChanged(ArrayList<ArrayList<Card>> savedBoardPiles) {
+                if (savedBoardPiles != null) {
+                    boardPiles = savedBoardPiles;
+                    displaySavedGame();
+                }
+            }
+        });
+
+        spiderSolitaireViewModel.getMainDeckLiveData().observe(getViewLifecycleOwner(), new Observer<ArrayList<Card>>() {
+            @Override
+            public void onChanged(ArrayList<Card> savedMainDeck) {
+                if (savedMainDeck != null) {
+                    mainDeckPile = savedMainDeck;
+                }
             }
         });
 
         playButton.setOnClickListener(v -> {
             mainScreen.setVisibility(View.GONE);
             gameBoard.setVisibility(View.VISIBLE);
-            startGame();
+            if (boardPiles == null || boardPiles.isEmpty()) {
+                startGame();
+            }
             resetButton.setVisibility(View.VISIBLE);
         });
 
@@ -91,11 +95,6 @@ public class SpiderSolitaireFragment extends Fragment {
         boardPiles = new ArrayList<>();
         completedDeckPiles = new ArrayList<>();
         mainDeckPile = new ArrayList<>(deck.getCards());
-
-        boolean isLargeCard = spiderSolitaireViewModel.getIsLargeCard().getValue() != null && spiderSolitaireViewModel.getIsLargeCard().getValue();
-        cardAdapter = new CardAdapter(boardPiles, cardImageMap, cardWidth, cardHeight, cardOffset,
-                completedDeckImages, mainDeckPile, pileTopMargin, gameBoard, isLargeCard);
-        cardAdapter.displayPiles(requireContext());
 
         for (int i = 0; i < 10; i++) {
             ArrayList<Card> pile = new ArrayList<>();
@@ -122,25 +121,26 @@ public class SpiderSolitaireFragment extends Fragment {
             completedDeckPiles.add(new ArrayList<>());
         }
 
-        int[] completedDeckImages = {
-                R.drawable.backgroundtransparent,
-                R.drawable.backgroundtransparent,
-                R.drawable.backgroundtransparent,
-                R.drawable.backgroundtransparent
-        };
+        cardAdapter = new CardAdapter(boardPiles, cardImageMap, cardWidth, cardHeight, cardOffset, null, mainDeckPile, 450, gameBoard, isTtsEnabled);
+        cardAdapter.displayPiles(requireContext());
 
-        int pileTopMargin = 450;
+        // Save the game state in ViewModel
+        spiderSolitaireViewModel.setBoardPiles(boardPiles);
+        spiderSolitaireViewModel.setMainDeck(mainDeckPile);
+    }
 
-        // Initialize adapter and pass the TTS state
-        cardAdapter = new CardAdapter(boardPiles, cardImageMap, cardWidth, cardHeight, cardOffset, completedDeckImages, mainDeckPile, pileTopMargin, gameBoard, isTtsEnabled);
+    private void displaySavedGame() {
+        // Display saved game using cardAdapter
+        cardAdapter = new CardAdapter(boardPiles, cardImageMap, cardWidth, cardHeight, cardOffset, null, mainDeckPile, 450, gameBoard, isTtsEnabled);
         cardAdapter.displayPiles(requireContext());
     }
 
     private void resetGame() {
-        boardPiles.clear();
-        completedDeckPiles.clear();
-        mainDeckPile.clear();
+        // Clear the ViewModel data
+        spiderSolitaireViewModel.setBoardPiles(new ArrayList<>());
+        spiderSolitaireViewModel.setMainDeck(new ArrayList<>());
 
+        // Restart the game with a fresh setup
         startGame();
     }
 }

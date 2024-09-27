@@ -24,13 +24,12 @@ public class CardAdapter {
     private RelativeLayout gameBoard;
     private TextToSpeech tts;
     private boolean isTtsEnabled; // TTS state
-    private boolean isLargeCard; // Card size state
 
     // Constructor for CardAdapter
     public CardAdapter(ArrayList<ArrayList<Card>> boardPiles, Map<String, Integer> cardImageMap,
                        int cardWidth, int cardHeight, int cardOffset,
                        int[] completedDeckImages, ArrayList<Card> mainDeckPile,
-                       int pileTopMargin, RelativeLayout gameBoard, boolean isTtsEnabled, boolean isLargeCard) {
+                       int pileTopMargin, RelativeLayout gameBoard, boolean isTtsEnabled) {
         this.boardPiles = boardPiles;
         this.cardImageMap = cardImageMap;
         this.cardWidth = cardWidth;
@@ -45,7 +44,6 @@ public class CardAdapter {
         MainActivity mainActivity = (MainActivity) gameBoard.getContext();
         this.tts = mainActivity.getTextToSpeech();
         this.isTtsEnabled = isTtsEnabled;
-        this.isLargeCard = isLargeCard; // Card size state
     }
 
     public void displayPiles(Context context) {
@@ -64,9 +62,7 @@ public class CardAdapter {
 
                 // Set card face-up or face-down based on its actual state
                 if (card.isFaceUp()) {
-                    // Load either normal or large card image based on the isLargeCard flag
-                    int cardImageResource = getCardImageResource(card, isLargeCard);
-                    cardView.setImageResource(cardImageResource);  // Show face-up card
+                    cardView.setImageResource(Card.getCardImageResource(card));  // Show face-up card
                 } else {
                     cardView.setImageResource(R.drawable.spiderback);  // Face down for other cards
                 }
@@ -106,14 +102,6 @@ public class CardAdapter {
         // Display completed deck piles and main deck (rest of the method remains the same)
     }
 
-    // Helper method to get the card image resource, with support for large cards
-    private int getCardImageResource(Card card, boolean isLarge) {
-        String cardName = card.getRank().name().toLowerCase() + "_of_" + card.getSuit().name().toLowerCase();
-        if (isLarge) {
-            cardName += "_large"; // Use the large version if flag is true
-        }
-        return gameBoard.getContext().getResources().getIdentifier(cardName, "drawable", gameBoard.getContext().getPackageName());
-    }
 
     private void handleCardClick(Card clickedCard, int pileIndex) {
         ArrayList<Card> sourcePile = boardPiles.get(pileIndex);
