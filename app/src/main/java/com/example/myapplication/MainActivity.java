@@ -13,7 +13,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.navigation.NavigationView;
 import com.example.myapplication.databinding.ActivityMainBinding;
-
+import android.util.Log;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -49,11 +49,18 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+        textToSpeech = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
                 if (status == TextToSpeech.SUCCESS) {
-                    textToSpeech.setLanguage(Locale.US);  // Set TTS language
+                    int result = textToSpeech.setLanguage(Locale.US);
+                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        Log.e("MainActivity", "Language not supported or missing data for TTS.");
+                    } else {
+                        Log.d("MainActivity", "TTS successfully initialized with Locale.US.");
+                    }
+                } else {
+                    Log.e("MainActivity", "TTS initialization failed.");
                 }
             }
         });

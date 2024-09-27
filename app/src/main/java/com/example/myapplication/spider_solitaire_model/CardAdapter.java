@@ -1,63 +1,168 @@
 package com.example.myapplication.spider_solitaire_model;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
+import android.content.Context;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.widget.ImageView;
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-public class CardAdapter extends RecyclerView.Adapter<CardAdapter.PileViewHolder> {
-
+public class CardAdapter {
     private ArrayList<ArrayList<Card>> boardPiles;
-    private static Map<String, Integer> cardImageMap;  // Map containing card images
+    private Map<String, Integer> cardImageMap;
+    private int cardWidth;
+    private int cardHeight;
+    private int cardOffset;
+    private int[] completedDeckImages;
+    private ArrayList<Card> mainDeckPile;
+    private int pileTopMargin;
+    private RelativeLayout gameBoard;
+    private TextToSpeech tts;
+    private boolean isTtsEnabled; // TTS state
 
-    public CardAdapter(ArrayList<ArrayList<Card>> boardPiles, Map<String, Integer> cardImageMap) {
+    // Constructor for CardAdapter
+    public CardAdapter(ArrayList<ArrayList<Card>> boardPiles, Map<String, Integer> cardImageMap,
+                       int cardWidth, int cardHeight, int cardOffset,
+                       int[] completedDeckImages, ArrayList<Card> mainDeckPile,
+                       int pileTopMargin, RelativeLayout gameBoard, boolean isTtsEnabled) {
         this.boardPiles = boardPiles;
-        this.cardImageMap = cardImageMap;  // Initialize with the card image map
+        this.cardImageMap = cardImageMap;
+        this.cardWidth = cardWidth;
+        this.cardHeight = cardHeight;
+        this.cardOffset = cardOffset;
+        this.completedDeckImages = completedDeckImages;
+        this.mainDeckPile = mainDeckPile;
+        this.pileTopMargin = pileTopMargin;
+        this.gameBoard = gameBoard;
+
+        // Initialize TTS and TTS state
+        MainActivity mainActivity = (MainActivity) gameBoard.getContext();
+        this.tts = mainActivity.getTextToSpeech();
+        this.isTtsEnabled = isTtsEnabled;
     }
 
-    @NonNull
-    @Override
-    public PileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.fragment_spider, parent, false);
-        return new PileViewHolder(view);
-    }
+    public void displayPiles(Context context) {
+        gameBoard.removeAllViews();  // Clear previous views
 
-    @Override
-    public void onBindViewHolder(@NonNull PileViewHolder holder, int position) {
-        ArrayList<Card> pile = boardPiles.get(position);
-        holder.bindPile(pile);
-    }
+        // Display the 10 piles
+        for (int i = 0; i < boardPiles.size(); i++) {
+            final int pileIndex = i;  // Make a final copy of 'i'
+            ArrayList<Card> pile = boardPiles.get(i);
+            LinearLayout pileLayout = new LinearLayout(context);
+            pileLayout.setOrientation(LinearLayout.VERTICAL);
 
-    @Override
-    public int getItemCount() {
-        return boardPiles.size();
-    }
+            for (int j = 0; j < pile.size(); j++) {
+                Card card = pile.get(j);
+                ImageView cardView = new ImageView(context);
 
-    static class PileViewHolder extends RecyclerView.ViewHolder {
+                // Set card face-up or face-down based on its actual state
+                if (card.isFaceUp()) {
+                    cardView.setImageResource(Card.getCardImageResource(card));  // Show face-up card
+                } else {
+                    cardView.setImageResource(R.drawable.spiderback);  // Face down for other cards
+                }
 
-        private FrameLayout pileLayout;
+                // Set OnClickListener only for face-up cards with TTS
+                if (card.isFaceUp()) {
+                    cardView.setOnClickListener(v -> {
+                        handleCardClick(card, pileIndex); // Use final 'pileIndex' instead of 'i'
 
-        public PileViewHolder(@NonNull View itemView) {
-            super(itemView);
-            pileLayout = itemView.findViewById(R.id.gameBoard);  // FrameLayout for the pile
+                        // TTS: Speak the card details when clicked
+                        if (isTtsEnabled && tts != null) {
+                            String cardName = card.getRank().name() + " of " + card.getSuit().name();
+                            Log.d("SpiderSolitaire", "Speaking card: " + cardName);
+                            tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                        }
+                    });
+                }
+
+                // Set card size and margin for overlapping effect
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(cardWidth, cardHeight);
+                if (j > 0) {
+                    params.topMargin = -cardOffset;  // Overlapping margin
+                }
+                cardView.setLayoutParams(params);
+                pileLayout.addView(cardView);
+            }
+
+            // Set up the RelativeLayout positioning for the pile
+            RelativeLayout.LayoutParams pileParams = new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT
+            );
+            pileParams.setMargins(i * cardWidth, pileTopMargin, 40, 0);  // Position each pile with a margin
+            gameBoard.addView(pileLayout, pileParams);
         }
 
-        public void bindPile(ArrayList<Card> pile) {
-            pileLayout.removeAllViews();  // Clear any previous card views
+        // Display completed deck piles and main deck (rest of the method remains the same)
+    }
 
-            for (Card card : pile) {
-                ImageView cardView = new ImageView(pileLayout.getContext());
 
-                pileLayout.addView(cardView);  // Add the card view to the pile
+    private void handleCardClick(Card clickedCard, int pileIndex) {
+        ArrayList<Card> sourcePile = boardPiles.get(pileIndex);
+
+        int clickedCardIndex = sourcePile.indexOf(clickedCard);
+        if (clickedCardIndex == -1 || !clickedCard.isFaceUp()) {
+            return;
+        }
+
+        ArrayList<Card> cardsToMove = new ArrayList<>(sourcePile.subList(clickedCardIndex, sourcePile.size()));
+
+        if (!isSequential(cardsToMove)) {
+            return;
+        }
+
+        for (int i = 0; i < boardPiles.size(); i++) {
+            if (i != pileIndex) {
+                ArrayList<Card> targetPile = boardPiles.get(i);
+                Card topCardInTargetPile = targetPile.isEmpty() ? null : targetPile.get(targetPile.size() - 1);
+
+                if (topCardInTargetPile == null || cardsToMove.get(0).getRank().ordinal() == topCardInTargetPile.getRank().ordinal() - 1) {
+                    targetPile.addAll(cardsToMove);
+                    sourcePile.subList(clickedCardIndex, sourcePile.size()).clear();
+
+                    if (!sourcePile.isEmpty()) {
+                        Card newLastCard = sourcePile.get(sourcePile.size() - 1);
+                        newLastCard.setFaceUp(true);
+                    }
+
+                    displayPiles(gameBoard.getContext());
+                    return;
+                }
             }
         }
+    }
+
+    private boolean isSequential(ArrayList<Card> cardsToMove) {
+        for (int i = 0; i < cardsToMove.size() - 1; i++) {
+            if (cardsToMove.get(i).getRank().ordinal() != cardsToMove.get(i + 1).getRank().ordinal() + 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void dealFromMainDeck() {
+        if (mainDeckPile.size() < boardPiles.size()) return;
+
+        for (ArrayList<Card> pile : boardPiles) {
+            if (!mainDeckPile.isEmpty()) {
+                Card newCard = mainDeckPile.remove(mainDeckPile.size() - 1);
+                newCard.setFaceUp(true);
+                pile.add(newCard);
+
+                if (pile.size() > 1) {
+                    Card previousLastCard = pile.get(pile.size() - 2);
+                    previousLastCard.setFaceUp(false);
+                }
+            }
+        }
+
+        displayPiles(gameBoard.getContext());
     }
 }

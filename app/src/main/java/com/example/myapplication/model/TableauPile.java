@@ -1,38 +1,51 @@
 package com.example.myapplication.model;
 
+import android.util.Log;
+import java.util.List;
+import java.util.ArrayList;
+
 public class TableauPile extends Pile {
 
     public boolean canAddCard(Card card) {
-        if (isEmpty()) {
-            return "K".equals(card.getValue()); // Only Kings can be placed on empty tableau
+        Log.d("TableauPile", "canAddCard called for card: " + card.getValue());
+        Log.d("TableauPile", "Tableau pile size: " + cards.size());
+
+        if (cards.isEmpty()) {
+            // If the tableau pile is empty, only a King can be placed
+            return "King".equals(card.getValue());
+        } else {
+            // Standard rule: cards must alternate colors and be one rank lower
+            Card topCard = peekTopCard();
+            return !card.isSameColor(topCard) && card.isOneRankLower(topCard);
         }
-        Card topCard = peekTopCard();
-        return isAlternatingColor(card, topCard) && isOneRankLower(card, topCard);
     }
 
-    private boolean isAlternatingColor(Card card, Card topCard) {
-        return (isRed(card) && isBlack(topCard)) || (isBlack(card) && isRed(topCard));
-    }
-
-    private boolean isRed(Card card) {
-        return "Hearts".equals(card.getSuit()) || "Diamonds".equals(card.getSuit());
-    }
-
-    private boolean isBlack(Card card) {
-        return "Clubs".equals(card.getSuit()) || "Spades".equals(card.getSuit());
-    }
-
-    private boolean isOneRankLower(Card card, Card topCard) {
-        String[] ranks = {"A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"};
-        int cardIndex = indexOf(card.getValue(), ranks);
-        int topCardIndex = indexOf(topCard.getValue(), ranks);
-        return cardIndex + 1 == topCardIndex;
-    }
-
-    private int indexOf(String value, String[] array) {
-        for (int i = 0; i < array.length; i++) {
-            if (array[i].equals(value)) return i;
+    public void addCard(Card card, boolean shouldFlip) {
+        super.addCard(card);
+        // Only flip the card if we're adding it during gameplay
+        if (shouldFlip && !card.isFaceUp()) {
+            card.flip();
         }
-        return -1;
+    }
+    public List<Card> getFaceUpCardsFrom(Card card) {
+        List<Card> faceUpCards = new ArrayList<>();
+
+        // Find the index of the card in the tableau pile
+        int cardIndex = cards.indexOf(card);
+
+        // If the card is not found, return an empty list
+        if (cardIndex == -1) {
+            return faceUpCards;
+        }
+
+        // Loop through all cards from the given card onward
+        for (int i = cardIndex; i < cards.size(); i++) {
+            Card currentCard = cards.get(i);
+            if (currentCard.isFaceUp()) {
+                faceUpCards.add(currentCard);
+            }
+        }
+
+        return faceUpCards;
     }
 }

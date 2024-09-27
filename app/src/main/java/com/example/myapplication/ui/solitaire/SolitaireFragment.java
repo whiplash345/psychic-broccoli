@@ -2,12 +2,12 @@ package com.example.myapplication.ui.solitaire;
 
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.util.Log;
+import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -15,6 +15,7 @@ import com.example.myapplication.R;
 import com.example.myapplication.model.Card;
 import com.example.myapplication.model.FoundationPile;
 import com.example.myapplication.model.TableauPile;
+import com.example.myapplication.model.Pile;
 import com.example.myapplication.MainActivity;
 
 import java.util.ArrayList;
@@ -71,11 +72,11 @@ public class SolitaireFragment extends Fragment {
     }
 
     private int getScaledWidth() {
-        return (int) (ORIGINAL_WIDTH * 1.15); // Adjust this value as needed
+        return (int) (ORIGINAL_WIDTH * 1.3); // Adjust this value as needed
     }
 
     private int getScaledHeight() {
-        return (int) (ORIGINAL_HEIGHT * 1.15); // Adjust this value as needed
+        return (int) (ORIGINAL_HEIGHT * 1.3); // Adjust this value as needed
     }
 
     private void initializeGameBoard(View root) {
@@ -95,13 +96,16 @@ public class SolitaireFragment extends Fragment {
         List<Card> deck = createDeck();
         Collections.shuffle(deck);
 
+        // Distribute cards to tableau piles
         for (int i = 0; i < 7; i++) {
             for (int j = 0; j <= i; j++) {
                 Card card = deck.remove(0);
-                if (j == i) {
-                    card.flip();  // Ensure the last card in the pile is face up
-                }
-                tableauPiles.get(i).addCard(card);
+                // Pass false because we're in initialization phase
+                tableauPiles.get(i).addCard(card, false);
+            }
+            Card topCard = tableauPiles.get(i).peekTopCard();
+            if (!topCard.isFaceUp()) {
+                topCard.flip();
             }
         }
 
@@ -129,8 +133,20 @@ public class SolitaireFragment extends Fragment {
     }
 
     private void renderBoard(GridLayout solitaireBoard, Boolean isLarge) {
-        // Clear the board before rendering
+        // Clear the solitaire board to avoid duplicating views
         solitaireBoard.removeAllViews();
+
+        // Access MainActivity and TextTo-Speech instance
+        MainActivity mainActivity = (MainActivity) getActivity();
+        TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        if (tts == null) {
+            Log.e("SolitaireFragment", "TTS is null!");
+        } else {
+            Log.d("SolitaireFragment", "TTS retrieved successfully.");
+        }
+
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
 
         // Add the stock pile (column 0, row 0)
         addStockPile(solitaireBoard, isLarge);
@@ -138,90 +154,107 @@ public class SolitaireFragment extends Fragment {
         // Add the waste pile (column 1, row 0)
         addWastePile(solitaireBoard, isLarge);
 
-        // Access MainActivity to get the TextToSpeech instance
-        MainActivity mainActivity = (MainActivity) getActivity();
-        TextToSpeech tts = mainActivity.getTextToSpeech();
-
-        // Observe the TTS enabled state
-        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
-
-        // Set the vertical overlap between cards. Reduce this value to increase overlap.
-        int verticalOverlap = 50; // Adjust this value to control the overlap
-
-        // Add the four foundation piles (columns 3-6, row 0)
+        // Add the foundation piles (columns 3-6, row 0)
         addFoundationPiles(solitaireBoard, isLarge);
 
         // Set vertical offset to move tableau piles below stock/waste/foundation piles
-        int verticalOffset = getScaledHeight() - 200; // Adjust as needed
+        int verticalOffset = getScaledHeight() - 250; // Adjust as needed
 
-        // Get the total width of the screen to distribute columns evenly
+        // Get total screen width to distribute columns evenly
         int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int tableauColumnWidth = screenWidth / 7; // Divide width into 7 columns
 
-        // Calculate an equal width for each tableau pile (dividing by 7 columns)
-        int tableauColumnWidth = screenWidth / 7;
-
-        // Render tableau piles starting from column 0, but on the next row (row 1)
+        // Render tableau piles
         for (int i = 0; i < tableauPiles.size(); i++) {
             TableauPile tableauPile = tableauPiles.get(i);
-
-            // Create a FrameLayout for each tableau pile
             FrameLayout tableauLayout = new FrameLayout(getContext());
+
             GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
-
-            // Set each tableau pile in its respective column
-            layoutParams.columnSpec = GridLayout.spec(i); // Place in column 0-6
-            layoutParams.rowSpec = GridLayout.spec(1);    // Place in row 1
-
-            // Set consistent width for each column
-            layoutParams.width = tableauColumnWidth; // Each column has equal width
+            layoutParams.columnSpec = GridLayout.spec(i);
+            layoutParams.rowSpec = GridLayout.spec(1);
+            layoutParams.width = tableauColumnWidth;
             layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT;
-
-            // Remove any left or right margins to avoid gaps
-            layoutParams.leftMargin = 0;
-            layoutParams.rightMargin = 0;
-
-            // Add top margin to move the tableau piles down (from stock/waste/foundation piles)
             layoutParams.topMargin = verticalOffset;
 
             tableauLayout.setLayoutParams(layoutParams);
 
-            // Add cards to FrameLayout, stacking them with overlapping
-            for (int j = 0; j < tableauPile.getCards().size(); j++) {
-                Card card = tableauPile.getCards().get(j);  // Get the current card
+            // Add cards to the tableau
+            addCardsToTableau(tableauLayout, tableauPile, isLarge, isTtsEnabled, tts);
 
-                // Create ImageView for the card
-                ImageView cardView = createCardView(card, isLarge);
+            // Call `addTableauPileDragListeners` here
+            addTableauPileDragListeners(tableauLayout, tableauPile);
 
-                // Set layout parameters for cardView to create overlap
-                FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(
-                        getScaledWidth(), getScaledHeight() // Ensure sizes are scaled
-                );
-
-                // Adjust overlapping margin for stacked cards
-                cardParams.topMargin = j * 35; // Adjust overlap between cards
-                cardView.setLayoutParams(cardParams);
-
-                // Set OnClickListener for each card to speak its name (only if face-up)
-                cardView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (card.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
-                            String cardName = card.getValue() + " of " + card.getSuit();
-                            if (tts != null) {
-                                tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
-                            }
-                        }
-                    }
-                });
-
-                // Add the card to the FrameLayout (the tableau pile)
-                tableauLayout.addView(cardView);
-            }
-
-            // Add the FrameLayout (tableau pile) to the GridLayout
             solitaireBoard.addView(tableauLayout);
         }
     }
+/*
+    private FrameLayout createTableauLayout(int columnIndex, int tableauColumnWidth, int verticalOffset) {
+        FrameLayout tableauLayout = new FrameLayout(getContext());
+        GridLayout.LayoutParams layoutParams = new GridLayout.LayoutParams();
+
+        layoutParams.columnSpec = GridLayout.spec(columnIndex); // Column 0-6
+        layoutParams.rowSpec = GridLayout.spec(1); // Row 1 (for tableau)
+        layoutParams.width = getScaledWidth(); // Keep consistent with foundation pile size
+        layoutParams.height = GridLayout.LayoutParams.WRAP_CONTENT; // Allow height to adjust based on content
+        layoutParams.topMargin = verticalOffset; // Adjust for card overlap
+        layoutParams.leftMargin = 0; // No left margin to prevent shifting
+
+        tableauLayout.setLayoutParams(layoutParams);
+
+        // Set the same background as foundation piles for consistency
+        tableauLayout.setBackgroundResource(R.drawable.backgroundtransparent);
+
+        return tableauLayout;
+    }
+*/
+private void addCardsToTableau(FrameLayout tableauLayout, TableauPile tableauPile, Boolean isLarge, boolean isTtsEnabled, TextToSpeech tts) {
+    // Clear existing views in the layout to avoid overlaps or duplication
+    tableauLayout.removeAllViews();
+
+    // Size calculations: ensure the background and cards have consistent sizes
+    int scaledWidth = getScaledWidth(); // Same width as foundation piles
+    int scaledHeight = getScaledHeight(); // Same height as foundation piles
+
+    // Case 1: The tableau pile is empty
+    if (tableauPile.isEmpty()) {
+        // Create and configure the background for an empty tableau pile
+        ImageView emptyPileBackground = new ImageView(getContext());
+        emptyPileBackground.setImageResource(R.drawable.backgroundtransparent); // Use correct background resource
+
+        // Set layout parameters for positioning at the top of the tableau pile
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
+        layoutParams.topMargin = 0; // Ensure it stays at the top
+        emptyPileBackground.setLayoutParams(layoutParams);
+
+        // Add the background to the tableau layout
+        tableauLayout.addView(emptyPileBackground);
+
+    } else {
+        // Case 2: The tableau pile has cards, so render them
+
+        // Loop through each card in the pile and add it to the layout
+        for (int j = 0; j < tableauPile.getCards().size(); j++) {
+            Card card = tableauPile.getCards().get(j);
+
+            // Create the card view (now passing the tableauPile as the second argument)
+            ImageView cardView = createCardView(card, tableauPile, isLarge);
+
+            // Create layout parameters for the card, ensuring proper stacking (overlap)
+            FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
+            cardParams.topMargin = j * 45; // Adjust to stack cards downward with overlap
+            cardView.setLayoutParams(cardParams);
+
+            // Set up Text-to-Speech (TTS) click listener if the card is face-up and TTS is enabled
+            if (card.isFaceUp() && isTtsEnabled) {
+                cardView.setOnClickListener(v -> tts.speak(card.getValue() + " of " + card.getSuit(), TextToSpeech.QUEUE_FLUSH, null, null));
+            }
+
+            // Add the card view to the tableau layout
+            tableauLayout.addView(cardView);
+        }
+    }
+}
+
 
     private void addStockPile(GridLayout solitaireBoard, Boolean isLarge) {
         ImageView stockPileView = new ImageView(getContext());
@@ -265,8 +298,19 @@ public class SolitaireFragment extends Fragment {
             solitaireViewModel.setStockPile(stockPile);
             solitaireViewModel.setWastePile(wastePile);
         } else {
-            // TODO: If stock is empty, optionally reset the stock pile from the waste pile
+            // Reset stock pile if stock is empty and waste is not empty
+            if (!wastePile.isEmpty()) {
+                resetStockFromWaste();
+            }
         }
+    }
+
+    private void resetStockFromWaste() {
+        while (!wastePile.isEmpty()) {
+            stockPile.push(wastePile.pop());
+        }
+        solitaireViewModel.setStockPile(stockPile);
+        renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
     }
 
     private void addWastePile(GridLayout solitaireBoard, Boolean isLarge) {
@@ -275,6 +319,7 @@ public class SolitaireFragment extends Fragment {
 
         // Observe the TTS enabled state
         boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
+        Log.d("SolitaireFragment", "isTtsEnabled: " + isTtsEnabled);
 
         ImageView wastePileView = new ImageView(getContext());
 
@@ -285,15 +330,46 @@ public class SolitaireFragment extends Fragment {
             // Set the image for the top card
             wastePileView.setImageResource(getCardDrawableResource(topCard, isLarge));
 
-            // Set OnClickListener for TTS (only if the top card is face-up)
-            wastePileView.setOnClickListener(new View.OnClickListener() {
+            // Set OnTouchListener to handle both click and drag events
+            wastePileView.setOnTouchListener(new View.OnTouchListener() {
+                private long touchStartTime;
+                private boolean isDragging = false;
+
                 @Override
-                public void onClick(View v) {
-                    if (topCard.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
-                        String cardName = topCard.getValue() + " of " + topCard.getSuit();
-                        if (tts != null) {
-                            tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
-                        }
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    switch (motionEvent.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            touchStartTime = System.currentTimeMillis(); // Record touch start time
+                            isDragging = false; // Reset dragging flag
+                            return true;
+
+                        case MotionEvent.ACTION_UP:
+                            long touchDuration = System.currentTimeMillis() - touchStartTime;
+                            if (touchDuration < 200 && !isDragging) {
+                                // This is a click, not a drag
+                                if (topCard.isFaceUp() && isTtsEnabled) { // Only speak if the card is face-up and TTS is enabled
+                                    String cardName = topCard.getValue() + " of " + topCard.getSuit();
+                                    Log.d("SolitaireFragment", "Speaking card: " + cardName);
+                                    if (tts != null) {
+                                        tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                                    }
+                                }
+                            }
+                            return true;
+
+                        case MotionEvent.ACTION_MOVE:
+                            long moveDuration = System.currentTimeMillis() - touchStartTime;
+                            if (moveDuration > 200) {
+                                // This is a drag event
+                                isDragging = true;
+                                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(wastePileView);
+                                view.startDragAndDrop(null, shadowBuilder, wastePile.peek(), 0); // Pass the top card as localState
+                                Log.d("SolitaireFragment", "Dragging top card from waste pile: " + topCard.getValue() + " of " + topCard.getSuit());
+                            }
+                            return true;
+
+                        default:
+                            return false;
                     }
                 }
             });
@@ -323,6 +399,8 @@ public class SolitaireFragment extends Fragment {
         // Add the waste pile view to the solitaire board
         solitaireBoard.addView(wastePileView);
     }
+
+
 
     private void addFoundationPiles(GridLayout solitaireBoard, Boolean isLarge) {
         MainActivity mainActivity = (MainActivity) getActivity();
@@ -359,6 +437,9 @@ public class SolitaireFragment extends Fragment {
                 foundationPileView.setImageResource(R.drawable.backgroundtransparent);
             }
 
+            // Add drag listeners for moving cards to foundation
+            addFoundationPileDragListeners(foundationPileView, foundationPile);
+
             // Set layout params for foundation piles
             int scaledWidth = getScaledWidth();
             int scaledHeight = getScaledHeight();
@@ -378,35 +459,423 @@ public class SolitaireFragment extends Fragment {
         }
     }
 
-    private ImageView createCardView(Card card, Boolean isLarge) {
+    public boolean canMoveToTableauPile(Card card, TableauPile tableauPile) {
+        // Check if the tableau pile can accept the card
+        Log.d("SolitaireFragment", "Attempting to move card: " + card.getValue() + " to tableau pile.");
+        return tableauPile.canAddCard(card);
+    }
+
+    public boolean canMoveToFoundationPile(Card card, FoundationPile foundationPile) {
+        // If the foundation pile is empty, only allow Aces
+        if (foundationPile.isEmpty()) {
+            return "Ace".equals(card.getValue());
+        } else {
+            // If the pile is not empty, check if the card can be added in ascending order and same suit
+            Card topCard = foundationPile.peekTopCard();
+            return card.isOneRankHigher(topCard) && card.getSuit().equals(topCard.getSuit());
+        }
+    }
+
+    private boolean moveCardToTableau(TableauPile targetPile, Pile sourcePile) {
+        // Check if the source pile has any cards
+        if (sourcePile.isEmpty()) {
+            Log.d("SolitaireFragment", "Source pile is empty after moving card.");
+            return false;
+        }
+
+        // Get the top card of the source pile
+        Card cardToMove = sourcePile.peekTopCard();
+        Log.d("SolitaireFragment", "Attempting to move " + cardToMove.getValue() + " of " + cardToMove.getSuit() + " from source pile.");
+
+        // Check if the card can be added to the tableau pile
+        if (targetPile.canAddCard(cardToMove)) {
+            // Remove the card from the source pile and add it to the target pile
+            targetPile.addCard(sourcePile.removeCard());
+            Log.d("SolitaireFragment", "Card " + cardToMove.getValue() + " moved to tableau pile.");
+
+            // Check if the card that was just moved is already face-up
+            if (!cardToMove.isFaceUp()) {
+                cardToMove.flip();  // Flip to face-up if it was face-down
+                Log.d("SolitaireFragment", "Flipped card to face-up: " + cardToMove.getValue() + " of " + cardToMove.getSuit());
+            }
+
+            // After moving, check if the next top card in the source pile needs to be flipped
+            if (!sourcePile.isEmpty()) {
+                Card topCard = sourcePile.peekTopCard();
+                if (!topCard.isFaceUp()) {
+                    topCard.flip();  // Flip the newly revealed top card of the source pile to face-up
+                    Log.d("SolitaireFragment", "Flipped new top card of source pile: " + topCard.getValue() + " of " + topCard.getSuit());
+                }
+            }
+
+            // Re-render the board to reflect changes
+            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+            return true;
+        }
+
+        return false;  // Move is invalid
+    }
+
+    public boolean moveCardToFoundation(FoundationPile targetPile, Pile sourcePile) {
+        // Check if the source pile has any cards
+        if (sourcePile.isEmpty()) {
+            return false;
+        }
+
+        // Get the top card of the source pile
+        Card cardToMove = sourcePile.peekTopCard();
+        Log.d("SolitaireFragment", "Attempting to move " + cardToMove.getValue() + " of " + cardToMove.getSuit() + " to foundation.");
+
+        // Check if the card can be added to the foundation pile
+        if (canMoveToFoundationPile(cardToMove, targetPile)) {
+            // Move the card from the source pile to the foundation
+            targetPile.addCard(sourcePile.removeCard());
+            Log.d("SolitaireFragment", "Moved " + cardToMove.getValue() + " to foundation pile.");
+
+            // If there are more cards in the source pile, flip the next card if needed
+            if (!sourcePile.isEmpty()) {
+                Card topCard = sourcePile.peekTopCard();
+                if (!topCard.isFaceUp()) {
+                    topCard.flip();
+                    Log.d("SolitaireFragment", "Flipped top card of source pile: " + topCard.getValue() + " of " + topCard.getSuit());
+                }
+            }
+
+            // Re-render the board to reflect the changes
+            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+
+            // Check if the player has won the game
+            if (checkWinCondition()) {
+                // Congratulate the player on winning
+                congratulatePlayer();
+            }
+
+            return true;
+        }
+
+        Log.d("SolitaireFragment", "Move to foundation failed. Cannot place " + cardToMove.getValue() + " on foundation pile.");
+        return false;
+    }
+
+/*
+    public boolean moveCardFromWaste(Pile wastePile, TableauPile tableauPile) {
+        // Check if waste pile has any cards
+        if (wastePile.isEmpty()) {
+            return false;
+        }
+
+        // Get the top card of the waste pile
+        Card cardToMove = wastePile.peekTopCard();
+
+        // Check if the card can be moved to the tableau pile
+        if (tableauPile.canAddCard(cardToMove)) {
+            // Move the card from waste to tableau
+            tableauPile.addCard(wastePile.removeCard());
+            return true;
+        }
+
+        return false; // Move is invalid
+    }
+    */
+
+
+    private ImageView createCardView(Card card, TableauPile tableauPile, Boolean isLarge) {
         ImageView cardView = new ImageView(getContext());
-
-        int scaledWidth = getScaledWidth();
-        int scaledHeight = getScaledHeight();
-
-        // Set the fixed size of the ImageView
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(scaledWidth, scaledHeight);
-        cardView.setLayoutParams(layoutParams);
-
-        // Set scale type to ensure the card is resized properly
-        cardView.setScaleType(ImageView.ScaleType.FIT_XY);
 
         // Set the card image (face-up or face-down)
         if (card.isFaceUp()) {
             int resId = getCardDrawableResource(card, isLarge);
             cardView.setImageResource(resId);
         } else {
-            // Display the back of the card when it's face down
             cardView.setImageResource(R.drawable.cardsback);
         }
 
-        // Set onClick listener for flipping cards
-        cardView.setOnClickListener(view -> {
-            card.flip();
-            cardView.setImageResource(card.isFaceUp() ? getCardDrawableResource(card, isLarge) : R.drawable.cardsback);
+        // Get TTS enabled state
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
+        Log.d("SolitaireFragment", "isTtsEnabled: " + isTtsEnabled);
+
+        // Set OnTouchListener to differentiate between click and drag
+        cardView.setOnTouchListener(new View.OnTouchListener() {
+            private long touchStartTime;
+
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        touchStartTime = System.currentTimeMillis(); // Record the time when touch starts
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                        long touchDuration = System.currentTimeMillis() - touchStartTime;
+                        if (touchDuration < 200) {
+                            // This is a click, not a drag
+                            if (card.isFaceUp() && isTtsEnabled) {
+                                String cardName = card.getValue() + " of " + card.getSuit();
+                                Log.d("SolitaireFragment", "Speaking card: " + cardName); // Log the card to be spoken
+                                MainActivity mainActivity = (MainActivity) getActivity();
+                                TextToSpeech tts = mainActivity.getTextToSpeech();
+                                if (tts != null) {
+                                    tts.speak(cardName, TextToSpeech.QUEUE_FLUSH, null, null);
+                                }
+                            }
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        long moveDuration = System.currentTimeMillis() - touchStartTime;
+                        if (moveDuration > 200) {
+                            // This is a drag event
+                            if (tableauPile.getFaceUpCardsFrom(card).size() == 1) {
+                                // Single card drag
+                                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                                view.startDragAndDrop(null, shadowBuilder, card, 0);
+                                Log.d("SolitaireFragment", "Dragging single card: " + card.getValue() + " of " + card.getSuit());
+                            } else {
+                                // Group of cards drag
+                                List<Card> faceUpCards = tableauPile.getFaceUpCardsFrom(card);
+                                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(cardView);
+                                view.startDragAndDrop(null, shadowBuilder, faceUpCards, 0);
+                                Log.d("SolitaireFragment", "Dragging group of cards from " + card.getValue());
+                            }
+                        }
+                        return true;
+                }
+                return false;
+            }
         });
 
         return cardView;
+    }
+
+
+
+
+
+
+    private Pile getSourcePileForCard(Card card) {
+        // Check the tableau piles
+        for (TableauPile tableauPile : tableauPiles) {
+            if (tableauPile.containsCard(card)) {
+                Log.d("SolitaireFragment", "Card found in tableau pile.");
+                return tableauPile;
+            }
+        }
+
+        // Check if the card is in the waste pile
+        if (!wastePile.isEmpty() && wastePile.peek().equals(card)) {
+            Log.d("SolitaireFragment", "Card found in waste pile.");
+            return new Pile() {
+                @Override
+                public Card removeCard() {
+                    return wastePile.pop();
+                }
+
+                @Override
+                public boolean isEmpty() {
+                    return wastePile.isEmpty();
+                }
+
+                @Override
+                public Card peekTopCard() {
+                    return wastePile.peek();
+                }
+            };
+        }
+
+        Log.d("SolitaireFragment", "Source pile for card not found.");
+        return null;
+    }
+
+    private void addTableauPileDragListeners(FrameLayout tableauLayout, TableauPile tableauPile) {
+        tableauLayout.setOnDragListener((v, event) -> {
+            switch (event.getAction()) {
+                case DragEvent.ACTION_DRAG_STARTED:
+                    return true;
+
+                case DragEvent.ACTION_DROP:
+                    Object draggedObject = event.getLocalState();
+
+                    // Handle the case where the dragged object is a list of cards (a sequence of face-up cards)
+                    if (draggedObject instanceof List) {
+                        List<Card> draggedCards = (List<Card>) draggedObject;
+                        Card firstCard = draggedCards.get(0); // The first card in the sequence
+
+                        // If tableau pile is empty, only allow a King to be dropped
+                        if (tableauPile.isEmpty()) {
+                            if ("King".equals(firstCard.getValue())) {
+                                // Move the group of cards to the empty tableau pile
+                                moveCardsToTableau(tableauPile, getSourcePileForCard(firstCard), draggedCards);
+                                renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                                return true;
+                            } else {
+                                return false; // Only Kings can be placed in an empty tableau pile
+                            }
+                        }
+
+                        // If tableau pile is not empty, check if the sequence can be added
+                        if (canMoveToTableauPile(firstCard, tableauPile)) {
+                            // Move the group of cards to the tableau pile
+                            moveCardsToTableau(tableauPile, getSourcePileForCard(firstCard), draggedCards);
+                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    // Handle the case where the dragged object is a single card (like from the waste pile)
+                    if (draggedObject instanceof Card) {
+                        Card draggedCard = (Card) draggedObject;
+
+                        // If tableau pile is empty, only allow a King to be dropped
+                        if (tableauPile.isEmpty()) {
+                            if ("King".equals(draggedCard.getValue())) {
+                                moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
+                                renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                                return true;
+                            } else {
+                                return false; // Only Kings can be placed in an empty tableau pile
+                            }
+                        }
+
+                        // If tableau pile is not empty, check if the card can be added
+                        if (canMoveToTableauPile(draggedCard, tableauPile)) {
+                            moveCardToTableau(tableauPile, getSourcePileForCard(draggedCard));
+                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                            return true;
+                        }
+
+                        return false;
+                    }
+
+                    return false;
+
+                default:
+                    return false;
+            }
+        });
+    }
+
+
+
+    private void moveCardsToTableau(TableauPile targetPile, Pile sourcePile, List<Card> cardsToMove) {
+        // Move each card to the target pile
+        for (Card card : cardsToMove) {
+            Log.d("SolitaireFragment", "Moving card: " + card.getValue() + " of " + card.getSuit() + " Face up: " + card.isFaceUp());
+            // Only flip the card if it's face down; ensure we don't re-flip cards
+            if (!card.isFaceUp()) {
+                card.flip();  // Flip to face up only if needed
+                Log.d("SolitaireFragment", "Flipping card: " + card.getValue() + " of " + card.getSuit());
+            }
+            targetPile.addCard(card);  // Add the card to the target pile
+        }
+
+        // Remove cards from the source pile
+        for (int i = 0; i < cardsToMove.size(); i++) {
+            sourcePile.removeCard();
+        }
+
+        // After moving, check if we need to flip the new top card of the source pile
+        if (!sourcePile.isEmpty()) {
+            Card newTopCard = sourcePile.peekTopCard();
+            if (!newTopCard.isFaceUp()) {
+                newTopCard.flip();  // Flip the newly revealed top card of the source pile
+                Log.d("SolitaireFragment", "Flipped new top card: " + newTopCard.getValue() + " of " + newTopCard.getSuit());
+            }
+        }
+    }
+
+    private void addFoundationPileDragListeners(ImageView foundationPileView, FoundationPile foundationPile) {
+        foundationPileView.setOnDragListener((v, event) -> {
+            switch (event.getAction()) {
+                case DragEvent.ACTION_DRAG_STARTED:
+                    Log.d("SolitaireFragment", "Drag started on foundation pile.");
+                    return true;
+
+                case DragEvent.ACTION_DRAG_ENTERED:
+                    Log.d("SolitaireFragment", "Drag entered foundation pile.");
+                    return true;
+
+                case DragEvent.ACTION_DRAG_EXITED:
+                    Log.d("SolitaireFragment", "Drag exited foundation pile.");
+                    return true;
+
+                case DragEvent.ACTION_DROP:
+                    Log.d("SolitaireFragment", "Attempting to drop on foundation pile.");
+                    Object draggedObject = event.getLocalState();
+
+                    // Check if the dragged object is a single card
+                    if (draggedObject instanceof Card) {
+                        Card draggedCard = (Card) draggedObject;
+                        Log.d("SolitaireFragment", "Trying to drop " + draggedCard.getValue() + " of " + draggedCard.getSuit() + " on foundation pile.");
+
+                        // Check if the card can be added to the foundation pile
+                        if (canMoveToFoundationPile(draggedCard, foundationPile)) {
+                            boolean moved = moveCardToFoundation(foundationPile, getSourcePileForCard(draggedCard));
+                            Log.d("SolitaireFragment", "Move to foundation " + (moved ? "succeeded" : "failed"));
+
+                            // Re-render the board
+                            renderBoard(solitaireBoard, solitaireViewModel.getIsLargeCard().getValue());
+                            return moved;
+                        } else {
+                            Log.d("SolitaireFragment", "Move failed: card cannot be placed on foundation.");
+                        }
+                        return false;
+                    }
+
+                    // Prevent dropping a sequence of cards onto a foundation pile
+                    if (draggedObject instanceof List) {
+                        Log.e("SolitaireFragment", "Error: Cannot drop a list of cards onto a foundation pile.");
+                        return false;
+                    }
+
+                    return false;
+
+                case DragEvent.ACTION_DRAG_ENDED:
+                    Log.d("SolitaireFragment", "Drag ended on foundation pile.");
+                    return true;
+
+                default:
+                    return false;
+            }
+        });
+    }
+
+    private boolean checkWinCondition() {
+        // Check if all foundation piles are complete
+        for (FoundationPile foundationPile : foundationPiles) {
+            if (foundationPile.getCards().size() != 13) {
+                return false; // Not all foundation piles are complete
+            }
+        }
+
+        // Check if all tableau piles, stock, and waste piles are empty
+        for (TableauPile tableauPile : tableauPiles) {
+            if (!tableauPile.isEmpty()) {
+                return false; // A tableau pile is not empty
+            }
+        }
+
+        if (!stockPile.isEmpty() || !wastePile.isEmpty()) {
+            return false; // Either the stock or waste pile is not empty
+        }
+
+        // The player has won the game
+        return true;
+    }
+
+    private void congratulatePlayer() {
+        // Show a toast message
+        Toast.makeText(getContext(), "Congratulations! You've won the game!", Toast.LENGTH_LONG).show();
+
+        // Use Text-to-Speech (TTS) if enabled
+        boolean isTtsEnabled = solitaireViewModel.getIsTtsEnabled().getValue() != null && solitaireViewModel.getIsTtsEnabled().getValue();
+        MainActivity mainActivity = (MainActivity) getActivity();
+        TextToSpeech tts = mainActivity.getTextToSpeech();
+
+        if (isTtsEnabled && tts != null) {
+            tts.speak("Congratulations! You've won the game!", TextToSpeech.QUEUE_FLUSH, null, null);
+        }
     }
 
     private int getCardDrawableResource(Card card, Boolean isLarge) {
